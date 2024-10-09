@@ -1,0 +1,187 @@
+{
+  "expo": {
+    "name": "health-master",
+    "slug": "healthmaster",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "com.health-master.healthmaster",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.health-master.healthmaster"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.health_master.healthmaster"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "fonts": [
+        {
+          "family": "Poppins",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Poppins-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Poppins-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Poppins-Bold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Poppins-SemiBold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Poppins-ExtraBold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Jost",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Jost-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Jost-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Jost-Bold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Jost-SemiBold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Jost-ExtraBold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Rubik",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Rubik-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Rubik-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Rubik-Bold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Rubik-SemiBold.ttf"
+            },
+            {
+              "url": "./assets/fonts/Rubik-ExtraBold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Outfit",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Outfit-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Outfit-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Outfit-Bold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Open Sans",
+          "fonts": [
+            {
+              "url": "./assets/fonts/OpenSans-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/OpenSans-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/OpenSans-Bold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Kanit",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Kanit-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Kanit-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Kanit-Bold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Sora",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Sora-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Sora-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Sora-Bold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Raleway",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Raleway-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Raleway-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Raleway-Bold.ttf"
+            }
+          ]
+        },
+        {
+          "family": "Roboto",
+          "fonts": [
+            {
+              "url": "./assets/fonts/Roboto-Regular.ttf"
+            },
+            {
+              "url": "./assets/fonts/Roboto-Medium.ttf"
+            },
+            {
+              "url": "./assets/fonts/Roboto-Bold.ttf"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
