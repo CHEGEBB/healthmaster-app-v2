@@ -54,7 +54,7 @@ export default function AuthScreen() {
     try {
       if (isNewUser) {
         // Create new user
-        const response = await fetch('http://192.168.205.123:5000/api/auth/signup', {
+        const response = await fetch('https://healthmaster-app-v2-1.onrender.com/api/auth/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export default function AuthScreen() {
         setIsNewUser(false); 
       } else {
         // Login existing user
-        const response = await fetch('http://192.168.205.123:5000/api/auth/login', {
+        const response = await fetch('https://healthmaster-app-v2-1.onrender.com/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
