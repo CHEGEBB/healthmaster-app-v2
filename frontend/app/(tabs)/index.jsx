@@ -7,7 +7,7 @@ import Appointments from "../../components/Appointments";
 import HealthStats from "../../components/HealthStats";
 import Reminders from "../../components/Reminders";
 import { useNavigation } from '@react-navigation/native';
-import axios from 'axios'; // Make sure to install axios if you haven't already
+import { getCurrentUser, avatars } from '../../appwrite';
 
 const ScheduleItem = ({ schedule, openModal }) => {
   if (!schedule) return null;
@@ -41,6 +41,8 @@ export default function Dashboard() {
   const [scheduleCount, setScheduleCount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [greeting, setGreeting] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   const navigation = useNavigation();
 
@@ -48,22 +50,37 @@ export default function Dashboard() {
     navigation.navigate('profile');
   }, [navigation]);
 
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/auth/login'); // Replace with your actual login endpoint
-      setUserData(response.data);
-      // Assume response.data contains the counts
-      setAppointmentsCount(response.data.appointmentsCount);
-      setAlarmsCount(response.data.alarmsCount);
-      setScheduleCount(response.data.scheduleCount);
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUserData(currentUser);
+        setAppointmentsCount(currentUser.appointmentsCount || 0);
+        setAlarmsCount(currentUser.alarmsCount || 0);
+        setScheduleCount(currentUser.scheduleCount || 0);
+
+        // Get user's avatar
+        if (currentUser.username) {
+          const avatarImage = avatars.getInitials(currentUser.username);
+          setAvatarUrl(avatarImage.href);
+        }
+
+        // Set greeting based on time of day
+        const hour = new Date().getHours();
+        let greetingText = '';
+        if (hour < 12) greetingText = 'Good morning';
+        else if (hour < 18) greetingText = 'Good afternoon';
+        else greetingText = 'Good evening';
+        setGreeting(`${greetingText}, ${currentUser.username || 'User'}👋!`);
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUserData();
-  }, []);
+  }, [fetchUserData]);
 
   const openModal = useCallback((schedule) => {
     setSelectedSchedule(schedule);
@@ -94,7 +111,7 @@ export default function Dashboard() {
           <View style={styles.overlay} />
 
           <View style={styles.row}>
-            <Text style={styles.headerText}>Hi, {userData ? userData.name : "User"}👋!</Text>
+            <Text style={styles.headerText}>{greeting}</Text>
             <TouchableOpacity style={styles.iconButton}>
               <Ionicons name="notifications-outline" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -120,10 +137,16 @@ export default function Dashboard() {
               <Text style={styles.dateText}>Today is {new Date().toLocaleDateString()}</Text>
             </View>
             <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
-              <Image
-                source={require('../../assets/images/12.jpeg')}
-                style={styles.profileImage}
-              />
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={[styles.profileImage, { backgroundColor: '#ccc', alignItems: 'center', justifyContent: 'center' }]}>
+                  <Text style={{ color: '#fff', fontSize: 18 }}>{userData?.username?.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -247,6 +270,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#FFF',
     marginTop: 10,
+    paddingHorizontal: 20,
   },
   searchBar: {
     backgroundColor: '#FFF',
@@ -256,6 +280,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginTop: 15,
     height: 40,
+    marginHorizontal: 20,
   },
   iconLeft: {
     marginRight: 10,
