@@ -8,23 +8,14 @@ import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
-import { Client, Account, ID } from "appwrite";
+import { signIn } from '../appwrite';
 
 const { width, height } = Dimensions.get('window');
 
-// Initialize Appwrite
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('6704d37c003c8a2f6a36');
-
-const account = new Account(client);
-
 export default function Login() {
   const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [userId, setUserId] = useState(null);
-  const [isVerificationStep, setIsVerificationStep] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,35 +71,15 @@ export default function Login() {
     ).start();
   }, []);
 
-  const handleSendVerification = async () => {
-    if (!phoneNumber) {
-      Alert.alert('Error', 'Please enter your phone number');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
       return;
     }
 
     setIsLoading(true);
     try {
-      const token = await account.createPhoneToken(ID.unique(), phoneNumber);
-      setUserId(token.userId);
-      setIsVerificationStep(true);
-      Alert.alert('Success', 'Verification code sent to your phone');
-    } catch (error) {
-      console.error('Send verification error:', error);
-      Alert.alert('Error', 'Failed to send verification code. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!verificationCode) {
-      Alert.alert('Error', 'Please enter the verification code');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const session = await account.createSession(userId, verificationCode);
+      const session = await signIn(email, password);
       console.log('Login successful', session);
       setModalVisible(true);
       setTimeout(() => {
@@ -116,14 +87,14 @@ export default function Login() {
         router.push('/started');
       }, 3000);
     } catch (error) {
-      console.error('Verification error:', error);
-      Alert.alert('Error', 'Invalid verification code. Please try again.');
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderInput = (icon, placeholder, value, onChangeText, keyboardType = 'default') => (
+  const renderInput = (icon, placeholder, value, onChangeText, keyboardType = 'default', secureTextEntry = false) => (
     <Animated.View
       style={[
         styles.inputContainer,
@@ -141,6 +112,7 @@ export default function Login() {
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
         onFocus={() => setFocusedInput(placeholder)}
         onBlur={() => setFocusedInput(null)}
       />
@@ -181,33 +153,17 @@ export default function Login() {
               <View style={styles.login}>
                 <Text style={styles.loginText}>Log in</Text>
               </View>
-              {!isVerificationStep ? (
-                <>
-                  {renderInput('phone-portrait-outline', 'Phone Number', phoneNumber, setPhoneNumber, 'phone-pad')}
-                  <TouchableOpacity 
-                    style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-                    onPress={handleSendVerification}
-                    disabled={isLoading}
-                  >
-                    <Text style={styles.loginButtonText}>
-                      {isLoading ? 'Sending...' : 'Send Verification Code'}
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  {renderInput('key-outline', 'Verification Code', verificationCode, setVerificationCode, 'numeric')}
-                  <TouchableOpacity 
-                    style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-                    onPress={handleVerifyCode}
-                    disabled={isLoading}
-                  >
-                    <Text style={styles.loginButtonText}>
-                      {isLoading ? 'Verifying...' : 'Verify and Login'}
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              )}
+              {renderInput('mail-outline', 'Email', email, setEmail, 'email-address')}
+              {renderInput('lock-closed-outline', 'Password', password, setPassword, 'default', true)}
+              <TouchableOpacity 
+                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </Text>
+              </TouchableOpacity>
               
               <View style={styles.signupContainer}>
                 <Text style={styles.signupText}>Don't have an account? </Text>

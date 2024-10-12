@@ -111,7 +111,7 @@ export default function Land() {
       </View>
       <Pressable 
         style={styles.button}
-        onPress={() => router.push('/auth2')}
+        onPress={() => router.push('/signup')}
       >
         <Text style={styles.buttonText}>Get Started</Text>
       </Pressable>

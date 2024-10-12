@@ -1,4 +1,3 @@
-//signup.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, Animated, 
@@ -8,16 +7,9 @@ import { Stack, useRouter } from 'expo-router';
 import { ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
-import { Client, Account, ID } from 'appwrite';
+import { createUser } from '../appwrite';
 
 const { height, width } = Dimensions.get('window');
-
-// Initialize Appwrite
-const client = new Client()
-  .setEndpoint('https://cloud.appwrite.io/v1') 
-  .setProject('6704d37c003c8a2f6a36');
-
-const account = new Account(client);
 
 const passwordStrengthLabels = {
   0: { label: 'Very Weak', color: '#ff4444' },
@@ -102,27 +94,26 @@ export default function SignUp() {
 
     setIsLoading(true);
     try {
-      const response = await account.create(
-        ID.unique(),
-        email,
-        password,
-        username
-      );
+      const newUser = await createUser(email, password, username);
       
-      setShowConfetti(true);
-      setTimeout(() => {
-        setShowModal(true);
-      }, 500);
-      
-      setTimeout(() => {
-        setShowConfetti(false);
-      }, 2000);
+      if (newUser) {
+        setShowConfetti(true);
+        setTimeout(() => {
+          setShowModal(true);
+        }, 500);
+        
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 2000);
+      } else {
+        throw new Error('Failed to create user');
+      }
     } catch (error) {
       let errorMessage = 'Failed to create account. Please try again.';
       
-      if (error.code === 409) {
+      if (error.message.includes('409')) {
         errorMessage = 'An account with this email already exists.';
-      } else if (error.code === 400) {
+      } else if (error.message.includes('400')) {
         errorMessage = 'Invalid email or password format.';
       }
       
