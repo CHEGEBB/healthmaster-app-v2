@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ImageBackground, StyleSheet, Dimensions, Animated, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Stack } from 'expo-router';
+import { useGlobalContext } from '../context/GlobalProvider';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +29,10 @@ export default function Land() {
   const scrollX = useRef(new Animated.Value(0)).current;
   const position = Animated.divide(scrollX, width);
   const flatListRef = useRef(null);
+  // const [isLoading, isLoggedIn] = useGlobalContext();
+
+  // if (!isLoading && isLoggedIn) return <Redirect href="/home" />;
+
 
   const infiniteScroll = useRef(null);
 

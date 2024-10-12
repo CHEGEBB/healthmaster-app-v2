@@ -4,6 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import CustomSplashScreen from '../components/SplashScreen';
+import GlobalProvider from '../context/GlobalProvider';
 
 const fontFiles = {
   'Jost-Regular': require('../assets/fonts/Jost-Regular.ttf'),
@@ -96,6 +97,7 @@ export default function Layout() {
   }
 
   return (
+    <GlobalProvider>
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
@@ -105,6 +107,7 @@ export default function Layout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </View>
+    </GlobalProvider>
   );
 }
 

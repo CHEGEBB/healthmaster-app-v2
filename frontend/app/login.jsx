@@ -88,7 +88,15 @@ export default function Login() {
       }, 3000);
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'Invalid email or password. Please try again.');
+      let errorMessage = 'An error occurred during login. Please try again.';
+      if (error.code === 401) {
+        errorMessage = 'Invalid email or password. Please try again.';
+      } else if (error.code === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.';
+      } else if (error.message.includes('session is active')) {
+        errorMessage = 'Another session is active. Please try logging in again.';
+      }
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsLoading(false);
     }
