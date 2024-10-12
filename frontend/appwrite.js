@@ -1,4 +1,4 @@
-import { Client, Account, ID, Avatars, Databases,  Query } from 'react-native-appwrite';
+import { Client, Account, ID, Avatars, Databases, Query, Storage } from 'react-native-appwrite';
 
 export const Config = {
   endpoint: "https://cloud.appwrite.io/v1",
@@ -21,6 +21,7 @@ client
 const account = new Account(client);
 const avatars = new Avatars(client);
 const databases = new Databases(client);
+const storage = new Storage(client);
 
 export const createUser = async (email, password, username) => {
   try {
@@ -84,6 +85,7 @@ export async function getAccount() {
     throw error;
   }
 }
+
 export const getCurrentUser = async () => {
   try {
     const accountDetails = await account.get();
@@ -120,3 +122,26 @@ export async function signOut() {
     }
   }
 }
+
+export const uploadImage = async (imageUri) => {
+  try {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const fileName = `image_${Date.now()}.jpg`;
+    
+    const file = await storage.createFile(
+      Config.storageId,
+      ID.unique(),
+      blob,
+      fileName
+    );
+
+    const fileUrl = storage.getFileView(Config.storageId, file.$id);
+    return fileUrl;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+
+export {storage};

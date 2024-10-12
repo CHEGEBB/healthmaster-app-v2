@@ -60,10 +60,11 @@ export default function Dashboard() {
         setScheduleCount(currentUser.scheduleCount || 0);
 
         // Get user's avatar
-        if (currentUser.username) {
+        if (currentUser.username && avatars?.getInitials) {
           const avatarImage = avatars.getInitials(currentUser.username);
-          setAvatarUrl(avatarImage.href);
+          setAvatarUrl(avatarImage?.href || null);
         }
+        
 
         // Set greeting based on time of day
         const hour = new Date().getHours();
@@ -111,7 +112,11 @@ export default function Dashboard() {
           <View style={styles.overlay} />
 
           <View style={styles.row}>
-            <Text style={styles.headerText}>{greeting}</Text>
+            <Text style={styles.headerText}>Hi 👋 <Text style={styles.profileName2}>
+                    {userData?.username || 'User'}
+                  </Text>
+
+            </Text>
             <TouchableOpacity style={styles.iconButton}>
               <Ionicons name="notifications-outline" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -136,6 +141,7 @@ export default function Dashboard() {
               <Ionicons name="calendar-outline" size={20} color="#FFF" />
               <Text style={styles.dateText}>Today is {new Date().toLocaleDateString()}</Text>
             </View>
+            <View style={styles.profCont}>
             <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
               {avatarUrl ? (
                 <Image
@@ -144,10 +150,16 @@ export default function Dashboard() {
                 />
               ) : (
                 <View style={[styles.profileImage, { backgroundColor: '#ccc', alignItems: 'center', justifyContent: 'center' }]}>
-                  <Text style={{ color: '#fff', fontSize: 18 }}>{userData?.username?.charAt(0).toUpperCase()}</Text>
+                  <Text style={{ color: '#fff', fontSize: 18 }}>{userData?.username?.charAt(0).toUpperCase() || 'U'}</Text>
                 </View>
               )}
             </TouchableOpacity>
+            <View>
+            <Text style={styles.profileName}>
+                    {userData?.username || 'User'}
+                  </Text>
+            </View>
+            </View>
           </View>
 
           <View style={styles.actionRow}>
@@ -241,6 +253,18 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+  },
+  profileName:{
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginLeft: 10,
+  },
+  profCont:{
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
   },
   imageStyle: {
     resizeMode: 'cover',

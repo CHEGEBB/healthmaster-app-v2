@@ -10,24 +10,28 @@ import {
   TextInput,
   ImageBackground,
   Animated,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { getCurrentUser, Config, databases,uploadImage,storage } from '../../appwrite';
 
 const Profile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [userData, setUserData] = useState({
-    name: 'Emily Sanson',
-    email: 'emilysanson8@hotmail.com',
-    phone: '+1 (555) 123-4567',
-    dateOfBirth: '1985-05-15',
-    gender: 'Male',
-    bloodType: 'A+',
-    height: '175 cm',
-    weight: '70 kg',
-    allergies: 'None',
-    emergencyContact: 'Jane Doe (+1 555-987-6543)',
+    name: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    bloodType: '',
+    height: '',
+    weight: '',
+    allergies: '',
+    emergencyContact: '',
+    avatar: '',
   });
 
   const [settings, setSettings] = useState({
@@ -47,6 +51,7 @@ const Profile = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    fetchUserData();
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
@@ -54,18 +59,72 @@ const Profile = ({ navigation }) => {
     }).start();
   }, []);
 
+  const fetchUserData = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        setUserData({
+          name: user.username,
+          email: user.email,
+          phone: user.phone || '',
+          dateOfBirth: user.dateOfBirth || '',
+          gender: user.gender || '',
+          bloodType: user.bloodType || '',
+          height: user.height || '',
+          weight: user.weight || '',
+          allergies: user.allergies || '',
+          emergencyContact: user.emergencyContact || '',
+          avatar: user.avatar || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert('Error', 'Failed to fetch user data');
+    }
+  };
+
   const handleEdit = () => {
     setIsEditing(!isEditing);
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Here you would typically save the updated userData to your backend
+  const handleSave = async () => {
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        await databases.updateDocument(
+          Config.databaseId,
+          Config.userCollectionId,
+          user.$id,
+          {
+            username: userData.name,
+            phone: userData.phone,
+            dateOfBirth: userData.dateOfBirth,
+            gender: userData.gender,
+            bloodType: userData.bloodType,
+            height: userData.height,
+            weight: userData.weight,
+            allergies: userData.allergies,
+            emergencyContact: userData.emergencyContact,
+          }
+        );
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+      Alert.alert('Error', 'Failed to update profile');
+    }
   };
 
-  const handleLogout = () => {
-    // Implement logout logic here
-    // navigation.navigate();
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      // Navigate to login screen or perform any other necessary actions after logout
+      navigation.navigate('Login'); // Adjust this based on your navigation structure
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out');
+    }
   };
 
   const toggleSetting = (setting) => {
@@ -73,6 +132,37 @@ const Profile = ({ navigation }) => {
       ...prevSettings,
       [setting]: !prevSettings[setting]
     }));
+  };
+
+  const handleImageUpload = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.cancelled) {
+        const user = await getCurrentUser();
+        if (user) {
+          const fileUrl = await uploadImage(result.uri);
+
+          await databases.updateDocument(
+            Config.databaseId,
+            Config.userCollectionId,
+            user.$id,
+            { avatar: fileUrl }
+          );
+
+          setUserData({ ...userData, avatar: fileUrl });
+          Alert.alert('Success', 'Profile picture updated successfully');
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload profile picture');
+    }
   };
 
   const renderEditableField = (label, value, key) => (
@@ -104,9 +194,9 @@ const Profile = ({ navigation }) => {
             <Ionicons name={isEditing ? "save-outline" : "create-outline"} size={24} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.profileImageContainer}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleImageUpload}>
               <Image
-                source={require('../../assets/images/12.jpeg')}
+                source={userData.avatar ? { uri: userData.avatar } : require('../../assets/images/12.jpeg')}
                 style={styles.profileImage}
               />
               <View style={styles.cameraIconContainer}>
