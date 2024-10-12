@@ -1,4 +1,4 @@
-import { Client, Account, ID } from 'react-native-appwrite';
+import { Client, Account, ID , Avatars} from 'react-native-appwrite';
 
 
 
@@ -13,7 +13,6 @@ export const Config ={
     remindersCollectionId : "670a259c000d92ef0f0a",
     storageId : "670a2a300017fdaee701"
 }
-// Init your  Native SDK
 const client = new Client();
 
 client
@@ -23,8 +22,24 @@ client
 ;
 
 const account = new Account(client);
+const avatars = new Avatars(client);
 
-export const createUser = () =>{
- 
+export const createUser = async (email, password, username) =>{
+    try {
+      const newAccount =  await account.create(
+        ID.unique(),
+        email,
+        password,
+        username
+      )
+      if(!newAccount) throw  Error;
+
+      const avatarUrl = avatars.getInitials();
+        
+    } catch (error) {
+        console.log(error);
+        throw new Error(error);
+        
+    }
 }
 
