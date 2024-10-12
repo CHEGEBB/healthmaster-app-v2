@@ -15,7 +15,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { getCurrentUser, Config, databases,uploadImage,storage } from '../../appwrite';
+import { getCurrentUser, Config, databases,uploadImage,storage, ID } from '../../appwrite';
+import * as FileSystem from 'expo-file-system';
+
 
 const Profile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -136,32 +138,58 @@ const Profile = ({ navigation }) => {
 
   const handleImageUpload = async () => {
     try {
+      // Request permissions first
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (permissionResult.granted === false) {
+        Alert.alert("Permission Required", "You need to grant camera roll permissions to upload an image.");
+        return;
+      }
+  
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
       });
-
-      if (!result.cancelled) {
+  
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const imageUri = result.assets[0].uri;
+        const fileName = imageUri.split('/').pop();
+        const mimeType = 'image/jpeg'; // Adjust if you need to support other formats
+  
+        const fileInfo = await FileSystem.getInfoAsync(imageUri);
+        if (!fileInfo.exists) {
+          throw new Error("File does not exist");
+        }
+  
         const user = await getCurrentUser();
         if (user) {
-          const fileUrl = await uploadImage(result.uri);
-
+          const fileContent = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
+          
+          const file = await storage.createFile(
+            Config.storageId,
+            ID.unique(),
+            fileContent,
+            fileName,
+            { contentType: mimeType }
+          );
+  
+          const fileUrl = storage.getFileView(Config.storageId, file.$id);
+  
           await databases.updateDocument(
             Config.databaseId,
             Config.userCollectionId,
             user.$id,
             { avatar: fileUrl }
           );
-
+  
           setUserData({ ...userData, avatar: fileUrl });
           Alert.alert('Success', 'Profile picture updated successfully');
         }
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      Alert.alert('Error', 'Failed to upload profile picture');
+      Alert.alert('Error', 'Failed to upload profile picture: ' + error.message);
     }
   };
 
