@@ -11,17 +11,29 @@ import {
   ImageBackground,
   Animated,
   Alert,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import { getCurrentUser, Config, databases,uploadImage,storage, ID } from '../../appwrite';
-import * as FileSystem from 'expo-file-system';
+import { getCurrentUser, Config, databases } from '../../appwrite';
 
+const AVATAR_IMAGES = [
+  require('../../assets/images/avatars/1.png'),
+  require('../../assets/images/avatars/2.png'),
+  require('../../assets/images/avatars/3.png'),
+  require('../../assets/images/avatars/4.png'),
+  require('../../assets/images/avatars/5.png'),
+  require('../../assets/images/avatars/6.png'),
+  require('../../assets/images/avatars/7.png'),
+  require('../../assets/images/avatars/8.png'),
+  require('../../assets/images/avatars/9.png'),
+  require('../../assets/images/avatars/10.png'),
+];
 
 const Profile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -86,7 +98,11 @@ const Profile = ({ navigation }) => {
   };
 
   const handleEdit = () => {
-    setIsEditing(!isEditing);
+    if (isEditing) {
+      handleSave();
+    } else {
+      setIsEditing(true);
+    }
   };
 
   const handleSave = async () => {
@@ -121,8 +137,7 @@ const Profile = ({ navigation }) => {
   const handleLogout = async () => {
     try {
       await signOut();
-      // Navigate to login screen or perform any other necessary actions after logout
-      navigation.navigate('Login'); // Adjust this based on your navigation structure
+      navigation.navigate('Login');
     } catch (error) {
       console.error('Error logging out:', error);
       Alert.alert('Error', 'Failed to log out');
@@ -136,60 +151,24 @@ const Profile = ({ navigation }) => {
     }));
   };
 
-  const handleImageUpload = async () => {
+  const handleAvatarSelect = async (index) => {
     try {
-      // Request permissions first
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (permissionResult.granted === false) {
-        Alert.alert("Permission Required", "You need to grant camera roll permissions to upload an image.");
-        return;
-      }
-  
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-  
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const imageUri = result.assets[0].uri;
-        const fileName = imageUri.split('/').pop();
-        const mimeType = 'image/jpeg'; // Adjust if you need to support other formats
-  
-        const fileInfo = await FileSystem.getInfoAsync(imageUri);
-        if (!fileInfo.exists) {
-          throw new Error("File does not exist");
-        }
-  
-        const user = await getCurrentUser();
-        if (user) {
-          const fileContent = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
-          
-          const file = await storage.createFile(
-            Config.storageId,
-            ID.unique(),
-            fileContent,
-            fileName,
-            { contentType: mimeType }
-          );
-  
-          const fileUrl = storage.getFileView(Config.storageId, file.$id);
-  
-          await databases.updateDocument(
-            Config.databaseId,
-            Config.userCollectionId,
-            user.$id,
-            { avatar: fileUrl }
-          );
-  
-          setUserData({ ...userData, avatar: fileUrl });
-          Alert.alert('Success', 'Profile picture updated successfully');
-        }
+      const user = await getCurrentUser();
+      if (user) {
+        const avatarPath = `../../assets/images/avatars/${index + 1}.png`;
+        await databases.updateDocument(
+          Config.databaseId,
+          Config.userCollectionId,
+          user.$id,
+          { avatar: avatarPath }
+        );
+        setUserData({ ...userData, avatar: avatarPath });
+        setShowAvatarModal(false);
+        Alert.alert('Success', 'Avatar updated successfully');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
-      Alert.alert('Error', 'Failed to upload profile picture: ' + error.message);
+      console.error('Error updating avatar:', error);
+      Alert.alert('Error', 'Failed to update avatar');
     }
   };
 
@@ -222,9 +201,9 @@ const Profile = ({ navigation }) => {
             <Ionicons name={isEditing ? "save-outline" : "create-outline"} size={24} color="#ffffff" />
           </TouchableOpacity>
           <View style={styles.profileImageContainer}>
-            <TouchableOpacity onPress={handleImageUpload}>
+            <TouchableOpacity onPress={() => setShowAvatarModal(true)}>
               <Image
-                source={userData.avatar ? { uri: userData.avatar } : require('../../assets/images/12.jpeg')}
+                source={userData.avatar ? { uri: userData.avatar } : require('../../assets/images/avatars/1.png')}
                 style={styles.profileImage}
               />
               <View style={styles.cameraIconContainer}>
@@ -303,6 +282,36 @@ const Profile = ({ navigation }) => {
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showAvatarModal}
+        onRequestClose={() => setShowAvatarModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choose Avatar</Text>
+            <View style={styles.avatarGrid}>
+              {AVATAR_IMAGES.map((avatar, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.avatarItem}
+                  onPress={() => handleAvatarSelect(index)}
+                >
+                  <Image source={avatar} style={styles.avatarImage} />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowAvatarModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
