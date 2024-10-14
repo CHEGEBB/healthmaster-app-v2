@@ -9,7 +9,8 @@ export const Config = {
   appoinmentsCollectionId: "670a254100339e546aa4",
   medicationCollectionId: "670a256a00336a73c6d3",
   remindersCollectionId: "670a259c000d92ef0f0a",
-  storageId: "670a2a300017fdaee701"
+  storageId: "670a2a300017fdaee701",
+  avatarId : "670b98c80004f12b1c7e"
 };
 
 const client = new Client();
@@ -140,6 +141,35 @@ export const uploadImage = async (imageUri) => {
     return fileUrl;
   } catch (error) {
     console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+
+export const uploadImages = async (imageUris) => {
+  try {
+    const uploadedImages = await Promise.all(
+      imageUris.map(async (uri, index) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const fileName = `avatar_${index + 1}.png`;
+        
+        const file = await storage.createFile(
+          Config.storageId,
+          ID.unique(),
+          blob,
+          fileName
+        );
+
+        return {
+          key: `avatar${index + 1}`,
+          url: storage.getFileView(Config.storageId, file.$id)
+        };
+      })
+    );
+
+    return Object.fromEntries(uploadedImages.map(({key, url}) => [key, url]));
+  } catch (error) {
+    console.error("Error uploading images:", error);
     throw error;
   }
 };

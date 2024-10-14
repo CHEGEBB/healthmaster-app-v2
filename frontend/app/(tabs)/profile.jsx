@@ -12,23 +12,27 @@ import {
   Animated,
   Alert,
   Modal,
+  FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getCurrentUser, Config, databases } from '../../appwrite';
 
-const AVATAR_IMAGES = [
-  require('../../assets/images/avatars/1.png'),
-  require('../../assets/images/avatars/2.png'),
-  require('../../assets/images/avatars/3.png'),
-  require('../../assets/images/avatars/4.png'),
-  require('../../assets/images/avatars/5.png'),
-  require('../../assets/images/avatars/6.png'),
-  require('../../assets/images/avatars/7.png'),
-  require('../../assets/images/avatars/8.png'),
-  require('../../assets/images/avatars/9.png'),
-  require('../../assets/images/avatars/10.png'),
-];
+// Import all avatar images
+const avatarImages = {
+  avatar1: require('../../assets/images/avatars/1.png'),
+  avatar2: require('../../assets/images/avatars/2.png'),
+  avatar3: require('../../assets/images/avatars/3.png'),
+  avatar4: require('../../assets/images/avatars/4.png'),
+  avatar5: require('../../assets/images/avatars/5.png'),
+  avatar6: require('../../assets/images/avatars/6.png'),
+  avatar7: require('../../assets/images/avatars/7.png'),
+  avatar8: require('../../assets/images/avatars/8.png'),
+  avatar9: require('../../assets/images/avatars/9.png'),
+  avatar10: require('../../assets/images/avatars/10.png'),
+  avatar11: require('../../assets/images/avatars/11.png'),
+  avatar12: require('../../assets/images/avatars/12.png'),
+};
 
 const Profile = ({ navigation }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -45,7 +49,7 @@ const Profile = ({ navigation }) => {
     weight: '',
     allergies: '',
     emergencyContact: '',
-    avatar: '',
+    avatar: 'avatar1',
   });
 
   const [settings, setSettings] = useState({
@@ -64,6 +68,8 @@ const Profile = ({ navigation }) => {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const avatars = Object.keys(avatarImages);
+
   useEffect(() => {
     fetchUserData();
     Animated.timing(fadeAnim, {
@@ -78,8 +84,8 @@ const Profile = ({ navigation }) => {
       const user = await getCurrentUser();
       if (user) {
         setUserData({
-          name: user.username,
-          email: user.email,
+          name: user.name || '',
+          email: user.email || '',
           phone: user.phone || '',
           dateOfBirth: user.dateOfBirth || '',
           gender: user.gender || '',
@@ -88,7 +94,7 @@ const Profile = ({ navigation }) => {
           weight: user.weight || '',
           allergies: user.allergies || '',
           emergencyContact: user.emergencyContact || '',
-          avatar: user.avatar || '',
+          avatar: user.avatar || 'avatar1',
         });
       }
     } catch (error) {
@@ -98,11 +104,7 @@ const Profile = ({ navigation }) => {
   };
 
   const handleEdit = () => {
-    if (isEditing) {
-      handleSave();
-    } else {
-      setIsEditing(true);
-    }
+    setIsEditing(!isEditing);
   };
 
   const handleSave = async () => {
@@ -114,7 +116,7 @@ const Profile = ({ navigation }) => {
           Config.userCollectionId,
           user.$id,
           {
-            username: userData.name,
+            name: userData.name,
             phone: userData.phone,
             dateOfBirth: userData.dateOfBirth,
             gender: userData.gender,
@@ -123,6 +125,7 @@ const Profile = ({ navigation }) => {
             weight: userData.weight,
             allergies: userData.allergies,
             emergencyContact: userData.emergencyContact,
+            avatar: userData.avatar,
           }
         );
         setIsEditing(false);
@@ -151,25 +154,9 @@ const Profile = ({ navigation }) => {
     }));
   };
 
-  const handleAvatarSelect = async (index) => {
-    try {
-      const user = await getCurrentUser();
-      if (user) {
-        const avatarPath = `../../assets/images/avatars/${index + 1}.png`;
-        await databases.updateDocument(
-          Config.databaseId,
-          Config.userCollectionId,
-          user.$id,
-          { avatar: avatarPath }
-        );
-        setUserData({ ...userData, avatar: avatarPath });
-        setShowAvatarModal(false);
-        Alert.alert('Success', 'Avatar updated successfully');
-      }
-    } catch (error) {
-      console.error('Error updating avatar:', error);
-      Alert.alert('Error', 'Failed to update avatar');
-    }
+  const handleAvatarSelection = (avatar) => {
+    setUserData({ ...userData, avatar });
+    setShowAvatarModal(false);
   };
 
   const renderEditableField = (label, value, key) => (
@@ -185,6 +172,12 @@ const Profile = ({ navigation }) => {
         <Text style={styles.fieldValue}>{value}</Text>
       )}
     </View>
+  );
+
+  const renderAvatarItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleAvatarSelection(item)}>
+      <Image source={avatarImages[item]} style={styles.avatarOption} />
+    </TouchableOpacity>
   );
 
   return (
@@ -203,7 +196,7 @@ const Profile = ({ navigation }) => {
           <View style={styles.profileImageContainer}>
             <TouchableOpacity onPress={() => setShowAvatarModal(true)}>
               <Image
-                source={userData.avatar ? { uri: userData.avatar } : require('../../assets/images/avatars/1.png')}
+                source={avatarImages[userData.avatar]}
                 style={styles.profileImage}
               />
               <View style={styles.cameraIconContainer}>
@@ -284,25 +277,21 @@ const Profile = ({ navigation }) => {
       </View>
 
       <Modal
-        animationType="slide"
-        transparent={true}
         visible={showAvatarModal}
+        transparent={true}
+        animationType="slide"
         onRequestClose={() => setShowAvatarModal(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choose Avatar</Text>
-            <View style={styles.avatarGrid}>
-              {AVATAR_IMAGES.map((avatar, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.avatarItem}
-                  onPress={() => handleAvatarSelect(index)}
-                >
-                  <Image source={avatar} style={styles.avatarImage} />
-                </TouchableOpacity>
-              ))}
-            </View>
+            <Text style={styles.modalTitle}>Choose an Avatar</Text>
+            <FlatList
+              data={avatars}
+              renderItem={renderAvatarItem}
+              keyExtractor={(item) => item}
+              numColumns={3}
+              contentContainerStyle={styles.avatarList}
+            />
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowAvatarModal(false)}
@@ -322,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#374151',
   },
   contentContainer: {
-    paddingBottom: 80, 
+    paddingBottom: 80,
   },
   header: {
     height: 280,
@@ -451,6 +440,47 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   logoutButtonText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#4b5563',
+    borderRadius: 20,
+    padding: 20,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 20,
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  avatarList: {
+    alignItems: 'center',
+  },
+  avatarOption: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    margin: 10,
+  },
+  closeButton: {
+    backgroundColor: '#0d9488',
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  closeButtonText: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
     color: '#ffffff',
