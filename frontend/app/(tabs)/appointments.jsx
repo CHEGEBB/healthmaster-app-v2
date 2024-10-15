@@ -9,6 +9,8 @@ const AppointmentsNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerShown: false,
+          header: () => null,  
         headerStyle: {
           backgroundColor: '#1e293b',
         },
@@ -16,12 +18,13 @@ const AppointmentsNavigator = () => {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerShown : false,
       }}
     >
       <Stack.Screen 
         name="AppointmentsList" 
         component={AppointmentsList} 
-        options={{ title: 'Appointments' }}
+        options={{ title: 'Appointments', headerShown : false }}
       />
       <Stack.Screen 
         name="BookAppointment" 

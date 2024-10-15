@@ -134,7 +134,7 @@ const BookAppointment = ({ navigation }) => {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={require('../assets/images/bg.jpeg')}
+          source={require('../assets/images/tba.jpeg')}
           style={styles.headerImage}
         />
         <View style={styles.headerOverlay}>
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
   },
   header: {
-    height: SCREEN_HEIGHT * 0.3,
+    height: SCREEN_HEIGHT * 0.5,
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
