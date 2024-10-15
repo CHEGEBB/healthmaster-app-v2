@@ -1,61 +1,61 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   Modal,
-  FlatList,
   StyleSheet,
   Dimensions,
+  FlatList,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import { fetchAppointments, databases, Config } from '../appwrite';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const AppointmentsList = ({ navigation }) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [activeTab, setActiveTab] = useState('upcoming');
+  const [activeTab, setActiveTab] = useState('scheduled');
   const [notificationCount, setNotificationCount] = useState(3);
   const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
 
-  const notificationPosition = useSharedValue(-300);
-
-  const animatedNotificationStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: notificationPosition.value }],
-  }));
+  const notificationAnimation = useState(new Animated.Value(-SCREEN_HEIGHT))[0];
 
   const toggleNotifications = useCallback(() => {
-    notificationPosition.value = withSpring(showNotifications ? -300 : 0);
+    Animated.spring(notificationAnimation, {
+      toValue: showNotifications ? -SCREEN_HEIGHT : 0,
+      useNativeDriver: true,
+    }).start();
     setShowNotifications(!showNotifications);
-  }, [showNotifications, notificationPosition]);
+  }, [showNotifications, notificationAnimation]);
 
-  const todayAppointments = useMemo(() => [
-    { id: 1, doctorName: 'Dr. Sarah Wong', time: '10:00 AM', image: require('../assets/images/as.jpeg'), specialization: 'Cardiologist' },
-    { id: 2, doctorName: 'Dr. Jane Smith', time: '2:00 PM', image: require('../assets/images/am.jpeg'), specialization: 'Dermatologist' },
-    { id: 3, doctorName: 'Dr. Mike Johnson', time: '11:30 AM', image: require('../assets/images/ab2.jpeg'), specialization: 'Pediatrician' },
-    { id: 4, doctorName: 'Dr. Sarah Brown', time: '3:30 PM', image: require('../assets/images/ab.jpeg'), specialization: 'Neurologist' },
-  ], []);
+  useEffect(() => {
+    fetchAppointmentsData();
+  }, []);
 
-  const appointments = useMemo(() => [
-    { id: 1, doctorName: 'Dr. Olivia Don', date: '2024-06-07', time: '10:00 AM', status: 'upcoming', image: require('../assets/images/ab4.jpeg'), specialization: 'Cardiologist' },
-    { id: 2, doctorName: 'Dr. Jane Snow', date: '2024-06-08', time: '2:00 PM', status: 'upcoming', image: require('../assets/images/2.png'), specialization: 'Dermatologist' },
-    { id: 3, doctorName: 'Dr. Mike Ming', date: '2024-06-09', time: '11:30 AM', status: 'upcoming', image: require('../assets/images/as2.jpeg'), specialization: 'Pediatrician' },
-    { id: 4, doctorName: 'Dr. Emily Kapoor', date: '2024-06-10', time: '3:30 PM', status: 'upcoming', image: require('../assets/images/i.jpeg'), specialization: 'Neurologist' },
-    { id: 5, doctorName: 'Dr. John Doe', date: '2024-06-05', time: '9:00 AM', status: 'completed', image: require('../assets/images/1.png'), specialization: 'Cardiologist' },
-    { id: 6, doctorName: 'Dr. Jane Smith', date: '2024-06-06', time: '1:00 PM', status: 'cancelled', image: require('../assets/images/2.png'), specialization: 'Dermatologist' },
-  ], []);
+  const fetchAppointmentsData = async () => {
+    try {
+      const fetchedAppointments = await fetchAppointments();
+      setAppointments(fetchedAppointments);
+
+      const today = new Date().toISOString().split('T')[0];
+      const todayAppts = fetchedAppointments.filter(appt => isToday(new Date(appt.date)));
+      setTodayAppointments(todayAppts);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    }
+  };
 
   const categories = useMemo(() => [
     { id: 1, name: 'Cardiology', color: '#FF6B6B', icon: 'heart' },
@@ -65,7 +65,11 @@ const AppointmentsList = ({ navigation }) => {
     { id: 5, name: 'Orthopedics', color: '#98D8C8', icon: 'bone' },
   ], []);
 
-  const renderTodayAppointmentCard = useCallback(({ item }) => (
+const renderTodayAppointmentCard = useCallback(({ item }) => {
+  // Generate a unique random number for each card
+  const randomImageNumber = Math.floor(Math.random() * 10) + 1;
+
+  return (
     <TouchableOpacity
       style={styles.todayAppointmentCard}
       onPress={() => {
@@ -78,16 +82,37 @@ const AppointmentsList = ({ navigation }) => {
         style={styles.todayAppointmentGradient}
       >
         <BlurView intensity={20} style={styles.blurView}>
-          <Image source={item.image} style={styles.todayDoctorImage} />
+          {/* Use the randomImageNumber to get the corresponding image */}
+          <Image source={images[randomImageNumber]} style={styles.todayDoctorImage} />
           <Text style={styles.todayDoctorName}>{item.doctorName}</Text>
-          <Text style={styles.todayAppointmentTime}>{item.time}</Text>
-          <Text style={styles.todayAppointmentSpecialization}>{item.specialization}</Text>
+          <Text style={styles.todayAppointmentTime}>{formatTime(new Date(item.date))}</Text>
+          <Text style={styles.todayAppointmentSpecialization}>{item.doctorSpecialization}</Text>
         </BlurView>
       </LinearGradient>
     </TouchableOpacity>
-  ), []);
+  );
+}, []);
 
-  const renderAppointmentCard = useCallback(({ item }) => (
+
+  // Map image numbers to the actual require calls
+const images = {
+  1: require('../assets/images/appointmentcards/1.jpeg'),
+  2: require('../assets/images/appointmentcards/2.jpeg'),
+  3: require('../assets/images/appointmentcards/3.jpeg'),
+  4: require('../assets/images/appointmentcards/4.jpeg'),
+  5: require('../assets/images/appointmentcards/5.jpeg'),
+  6: require('../assets/images/appointmentcards/6.jpeg'),
+  7: require('../assets/images/appointmentcards/7.jpeg'),
+  8: require('../assets/images/appointmentcards/8.jpeg'),
+  9: require('../assets/images/appointmentcards/9.jpeg'),
+  10: require('../assets/images/appointmentcards/10.jpeg'),
+};
+
+const renderAppointmentCard = useCallback(({ item, index }) => {
+  // Generate a unique random number for each card
+  const randomImageNumber = Math.floor(Math.random() * 10) + 1;
+
+  return (
     <TouchableOpacity
       style={[styles.appointmentCard, getStatusColor(item.status)]}
       onPress={() => {
@@ -95,16 +120,24 @@ const AppointmentsList = ({ navigation }) => {
         setShowAppointmentDetails(true);
       }}
     >
-      <Image source={item.image} style={styles.doctorImage} />
+      {/* Use the randomImageNumber to get the corresponding image */}
+      <Image 
+        source={images[randomImageNumber]} 
+        style={styles.appointmentCardImage}
+      />
       <View style={styles.appointmentDetails}>
         <Text style={styles.appointmentDoctorName}>{item.doctorName}</Text>
-        <Text style={styles.appointmentSpecialization}>{item.specialization}</Text>
-        <Text style={styles.appointmentDate}>{item.date}</Text>
-        <Text style={styles.appointmentTime}>{item.time}</Text>
-        <Text style={[styles.appointmentStatus, getStatusTextColor(item.status)]}>{item.status}</Text>
+        <Text style={styles.appointmentSpecialization}>{item.doctorSpecialization}</Text>
+        <Text style={styles.appointmentDate}>{formatDate(new Date(item.date))}</Text>
+        <Text style={styles.appointmentTime}>{formatTime(new Date(item.date))}</Text>
+        <View style={styles.statusContainer}>
+          <FontAwesome5 name={getStatusIcon(item.status)} size={16} color={getStatusColor(item.status).borderColor} />
+          <Text style={[styles.appointmentStatus, getStatusTextColor(item.status)]}>{item.status}</Text>
+        </View>
       </View>
     </TouchableOpacity>
-  ), []);
+  );
+}, []);
 
   const renderCategoryCard = useCallback(({ item }) => (
     <TouchableOpacity
@@ -121,28 +154,60 @@ const AppointmentsList = ({ navigation }) => {
   ), [selectedCategory]);
 
   const getStatusColor = useCallback((status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'completed': return { borderColor: '#4CAF50' };
       case 'cancelled': return { borderColor: '#F44336' };
-      case 'upcoming': return { borderColor: '#2196F3' };
-      default: return {};
+      case 'scheduled': return { borderColor: '#2196F3' };
+      default: return { borderColor: '#FFA000' };
     }
   }, []);
 
   const getStatusTextColor = useCallback((status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'completed': return { color: '#4CAF50' };
       case 'cancelled': return { color: '#F44336' };
-      case 'upcoming': return { color: '#2196F3' };
-      default: return {};
+      case 'scheduled': return { color: '#2196F3' };
+      default: return { color: '#FFA000' };
     }
   }, []);
 
-  const handleDeleteAppointment = useCallback(() => {
-    // Logic to delete appointment
-    setShowAppointmentDetails(false);
-    // Update appointments list
+  const getStatusIcon = useCallback((status) => {
+    switch (status.toLowerCase()) {
+      case 'completed': return 'check-circle';
+      case 'cancelled': return 'times-circle';
+      case 'scheduled': return 'calendar-check';
+      default: return 'question-circle';
+    }
   }, []);
+
+  const handleDeleteAppointment = useCallback(async () => {
+    try {
+      await databases.deleteDocument(
+        Config.databaseId,
+        Config.appoinmentsCollectionId,
+        selectedAppointment.$id
+      );
+      setShowAppointmentDetails(false);
+      fetchAppointmentsData();
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+    }
+  }, [selectedAppointment]);
+
+  const handleCompleteAppointment = useCallback(async () => {
+    try {
+      await databases.updateDocument(
+        Config.databaseId,
+        Config.appoinmentsCollectionId,
+        selectedAppointment.$id,
+        { status: 'completed' }
+      );
+      setShowAppointmentDetails(false);
+      fetchAppointmentsData();
+    } catch (error) {
+      console.error("Error completing appointment:", error);
+    }
+  }, [selectedAppointment]);
 
   const handleRescheduleAppointment = useCallback(() => {
     setShowAppointmentDetails(false);
@@ -150,46 +215,91 @@ const AppointmentsList = ({ navigation }) => {
   }, [navigation, selectedAppointment]);
 
   const filteredAppointments = useMemo(() =>
-    appointments.filter(a => a.status === activeTab),
+    appointments.filter(a => a.status.toLowerCase() === activeTab),
     [appointments, activeTab]
   );
+
+  const renderNotification = useCallback(({ item }) => (
+    <View style={styles.notificationItem}>
+      <View style={[styles.notificationDot, { backgroundColor: item.color }]} />
+      <Image source={{ uri: item.doctorImage }} style={styles.notificationDoctorImage} />
+      <View style={styles.notificationContent}>
+        <Text style={styles.notificationTitle}>{item.title}</Text>
+        <Text style={styles.notificationMessage}>{item.message}</Text>
+      </View>
+    </View>
+  ), []);
+
+  // Helper functions to replace date-fns
+  const formatDate = (date) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.profileButton}>
-          <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Appointments</Text>
-        <TouchableOpacity style={styles.notificationButton} onPress={toggleNotifications}>
-          <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationCount}>{notificationCount}</Text>
+        <Image
+          source={require('../assets/images/tba.jpeg')}
+          style={styles.headerImage}
+        />
+        <View style={styles.headerOverlay}>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity onPress={() => navigation.navigate('profile')}>
+              <Image source={require('../assets/images/avatars/default.png')} style={styles.profileIcon} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleNotifications}>
+              <Ionicons name="notifications" size={24} color="#FFFFFF" />
+              {notificationCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationCount}>{notificationCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Appointments</Text>
+        </View>
       </View>
 
-      <Animated.View style={[styles.notificationContainer, animatedNotificationStyle]}>
+      <Animated.View 
+        style={[
+          styles.notificationContainer, 
+          { transform: [{ translateY: notificationAnimation }] }
+        ]}
+      >
         <BlurView intensity={80} style={styles.notificationBlur}>
-          <Text style={styles.notificationTitle}>Notifications</Text>
+          <Text style={styles.notificationHeader}>Notifications</Text>
           <FlatList
             data={[
-              { id: 1, message: 'Appointment reminder: Dr. John Doe in 1 hour', icon: 'time-outline' },
-              { id: 2, message: 'New message from Dr. Jane Smith', icon: 'chatbubble-outline' },
-              { id: 3, message: 'Your prescription is ready for pickup', icon: 'medical-outline' },
+              { id: 1, title: 'Appointment Reminder', message: 'Dr. John Doe in 1 hour', color: '#4CAF50', doctorImage: 'https://example.com/doctor1.jpg' },
+              { id: 2, title: 'New Message', message: 'From Dr. Jane Smith', color: '#2196F3', doctorImage: 'https://example.com/doctor2.jpg' },
+              { id: 3, title: 'Prescription Ready', message: 'Ready for pickup', color: '#FFA000', doctorImage: 'https://example.com/pharmacy.jpg' },
             ]}
-            renderItem={({ item }) => (
-              <View style={styles.notificationItem}>
-                <Ionicons name={item.icon} size={24} color="#4ade80" style={styles.notificationIcon} />
-                <Text style={styles.notificationText}>{item.message}</Text>
-              </View>
-            )}
+            renderItem={renderNotification}
             keyExtractor={item => item.id.toString()}
           />
+          <TouchableOpacity style={styles.closeNotificationButton} onPress={toggleNotifications}>
+            <Ionicons name="close" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </BlurView>
       </Animated.View>
 
       <FlatList
+        data={filteredAppointments}
+        renderItem={renderAppointmentCard}
+        keyExtractor={item => item.$id}
+        contentContainerStyle={styles.appointmentList}
         ListHeaderComponent={
           <>
             <View style={styles.todayAppointments}>
@@ -197,7 +307,7 @@ const AppointmentsList = ({ navigation }) => {
               <FlatList
                 data={todayAppointments}
                 renderItem={renderTodayAppointmentCard}
-                keyExtractor={item => item.id.toString()}
+                keyExtractor={item => item.$id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.todayAppointmentList}
@@ -216,19 +326,12 @@ const AppointmentsList = ({ navigation }) => {
               />
             </View>
 
-            <TouchableOpacity
-              style={styles.bookAppointmentButton}
-              onPress={() => navigation.navigate('BookAppointment')}
-            >
-              <Text style={styles.bookAppointmentButtonText}>Book Appointment</Text>
-            </TouchableOpacity>
-
             <View style={styles.tabContainer}>
               <TouchableOpacity
-                style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
-                onPress={() => setActiveTab('upcoming')}
+                style={[styles.tab, activeTab === 'scheduled' && styles.activeTab]}
+                onPress={() => setActiveTab('scheduled')}
               >
-                <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>Upcoming</Text>
+                <Text style={[styles.tabText, activeTab === 'scheduled' && styles.activeTabText]}>Scheduled</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
@@ -245,13 +348,24 @@ const AppointmentsList = ({ navigation }) => {
             </View>
           </>
         }
-        data={filteredAppointments}
-        renderItem={renderAppointmentCard}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.appointmentList}
+        ListFooterComponent={
+          <View style={styles.footer}>
+            <AnimatedPressable
+              style={styles.bookAppointmentButton}
+              onPress={() => navigation.navigate('BookAppointment')}
+            >
+              <LinearGradient
+                colors={['#4CAF50', '#45B649']}
+                style={styles.buttonGradient}
+              >
+                <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" style={styles.buttonIcon} />
+                <Text style={styles.bookAppointmentButtonText}>Book Appointment</Text>
+              </LinearGradient>
+            </AnimatedPressable>
+          </View>
+        }
       />
-
-      <Modal
+<Modal
         visible={showAppointmentDetails}
         animationType="slide"
         transparent={true}
@@ -263,18 +377,31 @@ const AppointmentsList = ({ navigation }) => {
               <Text style={styles.modalTitle}>Appointment Details</Text>
               {selectedAppointment && (
                 <>
-                  <Image source={selectedAppointment.image} style={styles.modalDoctorImage} />
+                  <Image source={{ uri: selectedAppointment.doctorImage }} style={styles.modalDoctorImage} />
                   <Text style={styles.modalDoctorName}>{selectedAppointment.doctorName}</Text>
-                  <Text style={styles.modalAppointmentDate}>{selectedAppointment.date}</Text>
-                  <Text style={styles.modalAppointmentTime}>{selectedAppointment.time}</Text>
-                  <Text style={styles.modalAppointmentStatus}>{selectedAppointment.status}</Text>
+                  <Text style={styles.modalAppointmentDate}>{formatDate(new Date(selectedAppointment.date))}</Text>
+                  <Text style={styles.modalAppointmentTime}>{formatTime(new Date(selectedAppointment.date))}</Text>
+                  <Text style={[styles.modalAppointmentStatus, getStatusTextColor(selectedAppointment.status)]}>
+                    {selectedAppointment.status}
+                  </Text>
+                  <Text style={styles.modalAppointmentReason}>Reason: {selectedAppointment.reason}</Text>
                   <View style={styles.modalButtonContainer}>
-                    <TouchableOpacity style={styles.modalButton} onPress={handleRescheduleAppointment}>
-                      <Text style={styles.modalButtonText}>Reschedule</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={handleDeleteAppointment}>
-                      <Text style={styles.modalButtonText}>Cancel Appointment</Text>
-                    </TouchableOpacity>
+                    {selectedAppointment.status.toLowerCase() === 'scheduled' && (
+                      <>
+                        <TouchableOpacity style={[styles.modalButton, styles.modalRescheduleButton]} onPress={handleRescheduleAppointment}>
+                          <FontAwesome5 name="calendar-alt" size={20} color="#FFFFFF" />
+                          <Text style={styles.modalButtonText}>Reschedule</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={handleDeleteAppointment}>
+                          <FontAwesome5 name="times-circle" size={20} color="#FFFFFF" />
+                          <Text style={styles.modalButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalButton, styles.modalCompleteButton]} onPress={handleCompleteAppointment}>
+                          <FontAwesome5 name="check-circle" size={20} color="#FFFFFF" />
+                          <Text style={styles.modalButtonText}>Complete</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 </>
               )}
@@ -288,33 +415,58 @@ const AppointmentsList = ({ navigation }) => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1e293b',
   },
   header: {
+    height: 200,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  appointmentCardImage: {
+    width: 150,
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: 15,
+    borderColor: "#10b981",
+borderWidth : 2,
+
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  headerIcons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 50,
   },
-  profileButton: {
-    padding: 5,
+  profileIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  notificationButton: {
-    padding: 5,
+    fontFamily: 'Poppins-Bold',
   },
   notificationBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: -5,
+    right: -5,
     backgroundColor: '#FF6B6B',
     borderRadius: 10,
     width: 20,
@@ -329,38 +481,64 @@ const styles = StyleSheet.create({
   },
   notificationContainer: {
     position: 'absolute',
-    top: 40,
-    right: 80,
-    width: SCREEN_WIDTH * 0.8,
-    maxHeight: 300,
-    borderRadius: 20,
-    overflow: 'hidden',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.6,
+    backgroundColor: 'rgba(0,0,0,0.8)',
     zIndex: 1000,
-    backgroundColor: '#334155',
   },
   notificationBlur: {
+    flex: 1,
     padding: 20,
   },
-  notificationTitle: {
-    fontSize: 18,
+  notificationHeader: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 10,
+    marginBottom: 20,
+    fontFamily: 'Rubik-Bold',
   },
   notificationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 10,
-    padding: 10,
+    padding: 15,
     marginBottom: 10,
   },
-  notificationIcon: {
+  notificationDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginRight: 10,
   },
-  notificationText: {
-    color: '#FFFFFF',
+  notificationDoctorImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
+  },
+  notificationContent: {
     flex: 1,
+  },
+  notificationTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    fontFamily: 'Rubik-Medium',
+  },
+  notificationMessage: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    fontFamily: 'Rubik-Regular',
+  },
+  closeNotificationButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 10,
   },
   sectionTitle: {
     fontSize: 20,
@@ -368,6 +546,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginLeft: 20,
     marginBottom: 10,
+    fontFamily: 'Poppins-SemiBold',
   },
   todayAppointments: {
     marginTop: 20,
@@ -376,8 +555,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   todayAppointmentCard: {
-    width: 150,
-    height: 200,
+    width: 130,
+    height: 180,
     marginHorizontal: 10,
     borderRadius: 15,
     overflow: 'hidden',
@@ -391,27 +570,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   todayDoctorImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: '100%',
+    height: '75%',
+    borderRadius: 30,
     alignSelf: 'center',
   },
   todayDoctorName: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 10,
+    fontFamily: 'Rubik-Medium',
   },
   todayAppointmentTime: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
+    fontFamily: 'Rubik-Regular',
   },
   todayAppointmentSpecialization: {
     color: '#CCCCCC',
-    fontSize: 12,
+    fontSize: 10,
     textAlign: 'center',
+    fontFamily: 'Rubik-Regular',
   },
   categories: {
     marginTop: 20,
@@ -420,8 +602,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   categoryCard: {
-    width: 100,
-    height: 100,
+    width: 90,
+    height: 90,
     borderRadius: 15,
     marginHorizontal: 10,
     justifyContent: 'center',
@@ -434,25 +616,14 @@ const styles = StyleSheet.create({
   categoryName: {
     color: '#FFFFFF',
     marginTop: 10,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-  },
-  bookAppointmentButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 15,
-    margin: 20,
-    padding: 15,
-    alignItems: 'center',
-  },
-  bookAppointmentButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Kanit-Regular',
   },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginVertical: 20,
   },
   tab: {
     paddingVertical: 10,
@@ -464,7 +635,8 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: '#CCCCCC',
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: 'Raleway-Medium',
   },
   activeTabText: {
     color: '#FFFFFF',
@@ -494,30 +666,64 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-SemiBold',
   },
   appointmentSpecialization: {
     color: '#CCCCCC',
     fontSize: 14,
+    fontFamily: 'Poppins-Regular',
   },
   appointmentDate: {
     color: '#FFFFFF',
     fontSize: 14,
     marginTop: 5,
+    fontFamily: 'Poppins-Regular',
   },
   appointmentTime: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontFamily: 'Poppins-Regular',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
   },
   appointmentStatus: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginTop: 5,
+    marginLeft: 5,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  footer: {
+    paddingBottom: 80,
+  },
+  bookAppointmentButton: {
+    marginHorizontal: 20,
+    marginVertical: 30,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
+  bookAppointmentButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalBlur: {
     width: '90%',
@@ -533,6 +739,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'Poppins-Bold',
   },
   modalDoctorImage: {
     width: 100,
@@ -546,24 +753,34 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
   },
   modalAppointmentDate: {
     color: '#CCCCCC',
     fontSize: 16,
     textAlign: 'center',
     marginTop: 10,
+    fontFamily: 'Poppins-Regular',
   },
   modalAppointmentTime: {
     color: '#CCCCCC',
     fontSize: 16,
     textAlign: 'center',
+    fontFamily: 'Poppins-Regular',
   },
   modalAppointmentStatus: {
-    color: '#4CAF50',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 15,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  modalAppointmentReason: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 10,
+    fontFamily: 'Poppins-Regular',
   },
   modalButtonContainer: {
     flexDirection: 'row',
@@ -572,19 +789,29 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 10,
     padding: 10,
     marginHorizontal: 5,
   },
+  modalRescheduleButton: {
+    backgroundColor: '#2196F3',
+  },
   modalCancelButton: {
     backgroundColor: '#F44336',
+  },
+  modalCompleteButton: {
+    backgroundColor: '#4CAF50',
   },
   modalButtonText: {
     color: '#FFFFFF',
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
+    marginLeft: 5,
+    fontFamily: 'Poppins-SemiBold',
   },
   closeButton: {
     marginTop: 20,
@@ -596,6 +823,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     fontSize: 16,
+    fontFamily: 'Poppins-Medium',
   },
 });
 

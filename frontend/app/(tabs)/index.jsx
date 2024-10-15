@@ -233,8 +233,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#2E383F',
   },
+ 
   contentContainer: {
     flexGrow: 1,
+    paddingBottom: 80,
+
   },
   headerContainer: {
     width: '100%',

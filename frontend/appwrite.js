@@ -208,4 +208,27 @@ export const createAppointment = async (appointmentDetails) => {
   }
 };
 
+export const fetchAppointments = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const response = await databases.listDocuments(
+      Config.databaseId,
+      Config.appoinmentsCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.orderDesc("date") 
+      ]
+    );
+
+    return response.documents;
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    throw error;
+  }
+};
+
 export { storage, databases };

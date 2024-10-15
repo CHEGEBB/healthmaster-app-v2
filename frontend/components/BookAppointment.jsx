@@ -131,7 +131,7 @@ const BookAppointment = ({ navigation }) => {
   }, [selectedDoctor, selectedDate, reason, severity, navigation]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Image
           source={require('../assets/images/tba.jpeg')}
@@ -289,8 +289,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1e293b',
   },
+  contentContainer: {
+    paddingBottom: 80,
+  },
   header: {
-    height: SCREEN_HEIGHT * 0.5,
+    height: SCREEN_HEIGHT * 0.4,
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
