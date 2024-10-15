@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5 ,Feather} from '@expo/vector-icons';
 import { fetchAppointments, databases, Config } from '../appwrite';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -258,7 +258,7 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container}  contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Image
           source={require('../assets/images/tba.jpeg')}
@@ -360,18 +360,18 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
         }
         ListFooterComponent={
           <View style={styles.footer}>
-            <AnimatedPressable
-              style={styles.bookAppointmentButton}
-              onPress={() => navigation.navigate('BookAppointment')}
-            >
-              <LinearGradient
-                colors={['#4CAF50', '#45B649']}
-                style={styles.buttonGradient}
-              >
-                <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" style={styles.buttonIcon} />
-                <Text style={styles.bookAppointmentButtonText}>Book Appointment</Text>
-              </LinearGradient>
-            </AnimatedPressable>
+             <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => navigation.navigate('BookAppointment')}
+      >
+        <LinearGradient
+          colors={['#34d399', '#0c4a6e']}
+          style={styles.addButtonGradient}
+        >
+          <Feather name="plus" size={24} color="#ffffff" />
+          <Text style={styles.addButtonText}>Book Appointment</Text>
+        </LinearGradient>
+      </TouchableOpacity>
           </View>
         }
       />
@@ -430,9 +430,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1e293b',
+    paddingBottom: 80,
+
   },
   header: {
-    height: 200,
+    height: 300,
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
@@ -451,6 +453,9 @@ const styles = StyleSheet.create({
 borderWidth : 2,
 
   },
+  contentContainer: {
+    paddingBottom: 80,
+  },
   headerOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -461,11 +466,14 @@ borderWidth : 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop :40,
   },
   profileIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderColor:"#34d399",
+borderWidth: 2,
   },
   headerTitle: {
     fontSize: 32,
@@ -495,8 +503,9 @@ borderWidth : 2,
     left: 0,
     right: 0,
     height: SCREEN_HEIGHT * 0.6,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(20,40,90,0.95)',
     zIndex: 1000,
+    borderRadius: 30,
   },
   notificationBlur: {
     flex: 1,
@@ -516,6 +525,9 @@ borderWidth : 2,
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    borderColor:"#34d399",
+borderWidth: 2,
+
   },
   notificationDot: {
     width: 10,
@@ -733,6 +745,30 @@ borderWidth : 2,
   buttonIcon: {
     marginRight: 10,
   },
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  addButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  addButtonText: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+    color: '#ffffff',
+    marginLeft: 10,
+  },
   bookAppointmentButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
@@ -743,7 +779,7 @@ borderWidth : 2,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.9)',
   },
   modalBlur: {
     width: '90%',

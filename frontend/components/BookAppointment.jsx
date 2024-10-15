@@ -134,7 +134,7 @@ const BookAppointment = ({ navigation }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Image
-          source={require('../assets/images/tba.jpeg')}
+          source={require('../assets/images/6.jpeg')}
           style={styles.headerImage}
         />
         <View style={styles.headerOverlay}>
