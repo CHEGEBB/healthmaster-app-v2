@@ -65,33 +65,43 @@ const AppointmentsList = ({ navigation }) => {
     { id: 5, name: 'Orthopedics', color: '#98D8C8', icon: 'bone' },
   ], []);
 
-const renderTodayAppointmentCard = useCallback(({ item }) => {
-  // Generate a unique random number for each card
-  const randomImageNumber = Math.floor(Math.random() * 10) + 1;
-
-  return (
-    <TouchableOpacity
-      style={styles.todayAppointmentCard}
-      onPress={() => {
-        setSelectedAppointment(item);
-        setShowAppointmentDetails(true);
-      }}
-    >
-      <LinearGradient
-        colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-        style={styles.todayAppointmentGradient}
+  const renderTodayAppointmentCard = useCallback(({ item }) => {
+    // Generate a unique random number for each card
+    const randomImageNumber = Math.floor(Math.random() * 10) + 1;
+  
+    return (
+      <TouchableOpacity
+        style={styles.todayAppointmentCard}
+        onPress={() => {
+          setSelectedAppointment(item);
+          setShowAppointmentDetails(true);
+        }}
       >
-        <BlurView intensity={20} style={styles.blurView}>
-          {/* Use the randomImageNumber to get the corresponding image */}
-          <Image source={images[randomImageNumber]} style={styles.todayDoctorImage} />
-          <Text style={styles.todayDoctorName}>{item.doctorName}</Text>
-          <Text style={styles.todayAppointmentTime}>{formatTime(new Date(item.date))}</Text>
-          <Text style={styles.todayAppointmentSpecialization}>{item.doctorSpecialization}</Text>
-        </BlurView>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-}, []);
+        <LinearGradient
+          colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+          style={styles.todayAppointmentGradient}
+        >
+          <BlurView intensity={20} style={styles.blurView}>
+            {/* Use the randomImageNumber to get the corresponding image */}
+            <Image source={images[randomImageNumber]} style={styles.todayDoctorImage} />
+            <View style={styles.appointmentInfo}>
+              <Ionicons name="medkit-outline" size={16} color="#34d399" />
+              <Text style={styles.todayDoctorName}>{item.doctorName}</Text>
+            </View>
+            <View style={styles.appointmentInfo}>
+              <Ionicons name="time-outline" size={16} color="#fed7aa" />
+              <Text style={styles.todayAppointmentTime}>{formatTime(new Date(item.date))}</Text>
+            </View>
+            <View style={styles.appointmentInfo}>
+              <Ionicons name="clipboard-outline" size={16} color="#a78bfa" />
+              <Text style={styles.todayAppointmentSpecialization}>{item.doctorSpecialization}</Text>
+            </View>
+          </BlurView>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }, []);
+  
 
 
   // Map image numbers to the actual require calls
@@ -550,50 +560,60 @@ borderWidth : 2,
   },
   todayAppointments: {
     marginTop: 20,
+    height: 250,
+
   },
   todayAppointmentList: {
     paddingHorizontal: 10,
   },
   todayAppointmentCard: {
-    width: 130,
-    height: 180,
-    marginHorizontal: 10,
+    width: 140,
+    height: 210,
+    backgroundColor: '#1f2937',
     borderRadius: 15,
+    marginRight: 15,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   todayAppointmentGradient: {
     flex: 1,
+    padding: 10,
   },
   blurView: {
     flex: 1,
-    padding: 15,
-    justifyContent: 'space-between',
+    borderRadius: 15,
+    overflow: 'hidden',
   },
   todayDoctorImage: {
     width: '100%',
-    height: '75%',
-    borderRadius: 30,
-    alignSelf: 'center',
+    height: '60%',
+    borderRadius: 15,
+  },
+  appointmentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingHorizontal : 2,
+    top: 3,
   },
   todayDoctorName: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 10,
-    fontFamily: 'Rubik-Medium',
+    color: '#34d399',
+    marginLeft: 5,
   },
   todayAppointmentTime: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    textAlign: 'center',
-    fontFamily: 'Rubik-Regular',
+    color: '#fed7aa',
+    marginLeft: 5,
   },
   todayAppointmentSpecialization: {
-    color: '#CCCCCC',
-    fontSize: 10,
-    textAlign: 'center',
-    fontFamily: 'Rubik-Regular',
+    color: '#a78bfa',
+    marginLeft: 5,
   },
   categories: {
     marginTop: 20,
@@ -663,7 +683,7 @@ borderWidth : 2,
     flex: 1,
   },
   appointmentDoctorName: {
-    color: '#FFFFFF',
+    color: '#34d399',
     fontSize: 16,
     fontWeight: 'bold',
     fontFamily: 'Poppins-SemiBold',
@@ -674,13 +694,13 @@ borderWidth : 2,
     fontFamily: 'Poppins-Regular',
   },
   appointmentDate: {
-    color: '#FFFFFF',
+    color: '#fed7aa',
     fontSize: 14,
     marginTop: 5,
     fontFamily: 'Poppins-Regular',
   },
   appointmentTime: {
-    color: '#FFFFFF',
+    color: '#fed7aa',
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
   },
