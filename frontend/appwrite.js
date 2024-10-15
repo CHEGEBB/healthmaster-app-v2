@@ -174,4 +174,38 @@ export const uploadImages = async (imageUris) => {
   }
 };
 
-export {storage};
+export const createAppointment = async (appointmentDetails) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const appointment = {
+      userId: currentUser.$id,
+      doctorId: appointmentDetails.doctorId,
+      doctorName: appointmentDetails.doctorName,
+      doctorSpecialization: appointmentDetails.doctorSpecialization,
+      date: appointmentDetails.date,
+      reason: appointmentDetails.reason,
+      severity: appointmentDetails.severity,
+      status: 'Scheduled', // Default status
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await databases.createDocument(
+      Config.databaseId,
+      Config.appoinmentsCollectionId,
+      ID.unique(),
+      appointment
+    );
+
+    console.log('Appointment created:', response);
+    return response;
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    throw error;
+  }
+};
+
+export { storage, databases };

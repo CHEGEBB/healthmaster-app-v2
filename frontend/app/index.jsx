@@ -22,6 +22,16 @@ const carouselData = [
     text: "See your health stats and track your progress",
     image: require('../assets/images/heart.jpeg'),
   },
+  {
+    title: "Manage Chronic illness",
+    text: "Track your chronic illnesses and manage their progress",
+    image: require('../assets/images/chronic.jpeg'),
+  },
+  {
+    title: "Support Groups",
+    text: "Join support groups and receive personalized advice",
+    image: require('../assets/images/group.jpeg'),
+  }
 ];
 
 export default function Land() {

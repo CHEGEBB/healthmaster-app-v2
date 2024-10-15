@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,62 +6,46 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  FlatList,
   StyleSheet,
   Modal,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { Calendar } from 'react-native-calendars';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import LottieView from 'lottie-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   FadeIn,
-  FadeOut,
 } from 'react-native-reanimated';
+import { createAppointment } from '../appwrite';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-const BookAppointment = ({ navigation, route }) => {
+const BookAppointment = ({ navigation }) => {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [reason, setReason] = useState('');
   const [severity, setSeverity] = useState('');
-  const [showCalendar, setShowCalendar] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDoctorDetails, setShowDoctorDetails] = useState(false);
-  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const cardScale = useSharedValue(1);
 
-  useEffect(() => {
-    if (route.params?.isRescheduling) {
-      setIsRescheduling(true);
-      const appointment = route.params.appointment;
-      setSelectedDoctor(appointment.doctor);
-      setSelectedDate(appointment.date);
-      setSelectedTime(appointment.time);
-      setReason(appointment.reason || '');
-      setSeverity(appointment.severity || '');
-    }
-  }, [route.params]);
-
   const doctors = [
-    { id: 1, name: 'Dr. John Anderson', specialization: 'Cardiologist', image: require('../assets/images/am3.jpeg'), rating: 4.8, patients: 1000, availability: '9:00 AM - 5:00 PM', about: 'Dr. John Doe is a renowned cardiologist with over 15 years of experience in treating cardiovascular diseases.' },
-    { id: 2, name: 'Dr. Jane Smith', specialization: 'Dermatologist', image: require('../assets/images/am.jpeg'), rating: 4.9, patients: 1200, availability: '10:00 AM - 6:00 PM', about: 'Dr. Jane Smith is a board-certified dermatologist specializing in both medical and cosmetic dermatology.' },
-    { id: 3, name: 'Dr. Mike Johnson', specialization: 'Pediatrician', image: require('../assets/images/ab2.jpeg'), rating: 4.7, patients: 800, availability: '8:00 AM - 4:00 PM', about: 'Dr. Mike Johnson is a caring pediatrician dedicated to providing comprehensive healthcare for children from infancy through adolescence.' },
-    { id: 4, name: 'Dr. Sarah Brown', specialization: 'Neurologist', image: require('../assets/images/ab.jpeg'), rating: 4.6, patients: 950, availability: '11:00 AM - 7:00 PM', about: 'Dr. Sarah Brown is an experienced neurologist specializing in the diagnosis and treatment of disorders of the nervous system.' },
-  ];
-
-  const availableSlots = [
-    '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
-    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
+    { id: 1, name: 'Dr. John Anderson', specialization: 'Cardiologist', image: require('../assets/images/ab.jpeg'), rating: 4.8, patients: 1000, availability: '9:00 AM - 5:00 PM', about: 'Dr. John Anderson is a renowned cardiologist with over 15 years of experience in treating cardiovascular diseases.' },
+    { id: 2, name: 'Dr. Jane Smith', specialization: 'Dermatologist', image: require('../assets/images/as.jpeg'), rating: 4.9, patients: 1200, availability: '10:00 AM - 6:00 PM', about: 'Dr. Jane Smith is a board-certified dermatologist specializing in both medical and cosmetic dermatology.' },
+    { id: 3, name: 'Dr. Mike Johnson', specialization: 'Pediatrician', image: require('../assets/images/am.jpeg'), rating: 4.7, patients: 800, availability: '8:00 AM - 4:00 PM', about: 'Dr. Mike Johnson is a caring pediatrician dedicated to providing comprehensive healthcare for children from infancy through adolescence.' },
+    { id: 4, name: 'Dr. Sarah Brown', specialization: 'Neurologist', image: require('../assets/images/ab2.jpeg'), rating: 4.6, patients: 950, availability: '11:00 AM - 7:00 PM', about: 'Dr. Sarah Brown is an experienced neurologist specializing in the diagnosis and treatment of disorders of the nervous system.' },
+    { id: 5, name: 'Dr. Michael Davis', specialization: 'Gynecologist', image: require('../assets/images/as2.jpeg'), rating: 4.9, patients: 1100, availability: '10:00 AM - 6:00 PM', about: 'Dr. Michael Davis is a board-certified gynecologist specializing in the management of reproductive issues.' },
   ];
 
   const animatedCardStyle = useAnimatedStyle(() => {
@@ -72,7 +56,8 @@ const BookAppointment = ({ navigation, route }) => {
 
   const renderDoctorCard = useCallback(({ item }) => (
     <AnimatedTouchableOpacity
-      style={[styles.doctorCard, animatedCardStyle]}
+      key={item.id}
+      style={[styles.doctorCard, animatedCardStyle, selectedDoctor?.id === item.id && styles.selectedDoctorCard]}
       onPress={() => {
         setSelectedDoctor(item);
         setShowDoctorDetails(true);
@@ -90,92 +75,99 @@ const BookAppointment = ({ navigation, route }) => {
           <Text style={styles.doctorCardRatingText}>{item.rating}</Text>
         </View>
       </View>
+      {selectedDoctor?.id === item.id && (
+        <View style={styles.selectedDoctorIndicator}>
+          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+        </View>
+      )}
     </AnimatedTouchableOpacity>
-  ), [cardScale]);
+  ), [selectedDoctor, cardScale]);
 
-  const handleBookAppointment = useCallback(() => {
-    if (selectedDoctor && selectedDate && selectedTime && reason && severity) {
-      const newAppointment = {
-        doctor: selectedDoctor,
-        date: selectedDate,
-        time: selectedTime,
-        reason: reason,
-        severity: severity,
-      };
-      
-      // Here you would typically save the appointment to your backend or state management
-      console.log('New Appointment:', newAppointment);
-      
-      setShowSuccessModal(true);
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        navigation.goBack();
-      }, 3000);
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(false);
+    setSelectedDate(currentDate);
+  };
+
+  const handleTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || new Date();
+    setShowTimePicker(false);
+    setSelectedDate(currentTime);
+  };
+
+  const handleBookAppointment = useCallback(async () => {
+    if (selectedDoctor && selectedDate && reason && severity) {
+      setIsLoading(true);
+      try {
+        const appointmentDetails = {
+          doctorId: selectedDoctor.id.toString(),
+          doctorName: selectedDoctor.name,
+          doctorSpecialization: selectedDoctor.specialization,
+          date: selectedDate.toISOString(),
+          reason: reason,
+          severity: severity,
+        };
+
+        
+        const response = await createAppointment(appointmentDetails);
+
+        console.log('Appointment booked:', response);
+
+        
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigation.goBack();
+        }, 3000);
+      } catch (error) {
+        console.error('Error booking appointment:', error);
+        Alert.alert('Error', 'Failed to book appointment. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      // Show an error message or highlight missing fields
-      alert('Please fill in all fields before booking the appointment.');
+      Alert.alert('Incomplete Information', 'Please fill in all fields before booking the appointment.');
     }
-  }, [selectedDoctor, selectedDate, selectedTime, reason, severity, navigation]);
+  }, [selectedDoctor, selectedDate, reason, severity, navigation]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Image
+          source={require('../assets/images/bg.jpeg')}
+          style={styles.headerImage}
+        />
+        <View style={styles.headerOverlay}>
+          <Text style={styles.headerTitle}>Book Appointment</Text>
+        </View>
+      </View>
+
       <Animated.View 
-        style={styles.header}
+        style={styles.content}
         entering={FadeIn.duration(500)}
-        exiting={FadeOut.duration(500)}
       >
-        <Text style={styles.headerTitle}>
-          {isRescheduling ? 'Reschedule Appointment' : 'Book Appointment'}
-        </Text>
-      </Animated.View>
-
-      {!isRescheduling && (
-        <Animated.View 
-          style={styles.doctorSelection}
-          entering={FadeIn.duration(500).delay(200)}
+        <Text style={styles.sectionTitle}>Select a Doctor</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.doctorList}
         >
-          <Text style={styles.sectionTitle}>Select a Doctor</Text>
-          <FlatList
-            data={doctors}
-            renderItem={renderDoctorCard}
-            keyExtractor={item => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.doctorList}
-          />
-        </Animated.View>
-      )}
+          {doctors.map((doctor) => renderDoctorCard({ item: doctor }))}
+        </ScrollView>
 
-      <Animated.View entering={FadeIn.duration(500).delay(400)}>
-        <TouchableOpacity style={styles.dateSelection} onPress={() => setShowCalendar(true)}>
+        <TouchableOpacity style={styles.dateSelection} onPress={() => setShowDatePicker(true)}>
+          <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
           <Text style={styles.dateSelectionText}>
-            {selectedDate ? selectedDate : 'Select Date'}
+            {selectedDate.toLocaleDateString()}
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.timeSlots}>
-          <Text style={styles.sectionTitle}>Available Time Slots</Text>
-          <FlatList
-            data={availableSlots}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.timeSlot,
-                  selectedTime === item && styles.selectedTimeSlot
-                ]}
-                onPress={() => setSelectedTime(item)}
-              >
-                <Text style={[
-                  styles.timeSlotText,
-                  selectedTime === item && styles.selectedTimeSlotText
-                ]}>{item}</Text>
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-          />
-        </View>
+        <TouchableOpacity style={styles.dateSelection} onPress={() => setShowTimePicker(true)}>
+          <Ionicons name="time-outline" size={24} color="#4CAF50" />
+          <Text style={styles.dateSelectionText}>
+            {selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </TouchableOpacity>
 
         <TextInput
           style={styles.input}
@@ -206,50 +198,35 @@ const BookAppointment = ({ navigation, route }) => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.bookButton} onPress={handleBookAppointment}>
+        <TouchableOpacity 
+          style={styles.bookButton} 
+          onPress={handleBookAppointment}
+          disabled={isLoading}
+        >
           <Text style={styles.bookButtonText}>
-            {isRescheduling ? 'Reschedule Appointment' : 'Book Appointment'}
+            {isLoading ? 'Booking...' : 'Book Appointment'}
           </Text>
         </TouchableOpacity>
       </Animated.View>
 
-      <Modal
-        visible={showCalendar}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowCalendar(false)}
-      >
-        <View style={styles.modalContainer}>
-          <BlurView intensity={80} style={styles.modalBlur}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Date</Text>
-              <Calendar
-                markedDates={{
-                  [selectedDate]: { selected: true, selectedColor: '#4CAF50' },
-                }}
-                theme={{
-                  backgroundColor: '#1e293b',
-                  calendarBackground: '#1e293b',
-                  textSectionTitleColor: '#FFFFFF',
-                  selectedDayBackgroundColor: '#4CAF50',
-                  selectedDayTextColor: '#FFFFFF',
-                  todayTextColor: '#4CAF50',
-                  dayTextColor: '#FFFFFF',
-                  textDisabledColor: '#555555',
-                  dotColor: '#4CAF50',
-                  selectedDotColor: '#FFFFFF',
-                  arrowColor: '#4CAF50',
-                  monthTextColor: '#FFFFFF',
-                }}
-                onDayPress={(day) => {
-                  setSelectedDate(day.dateString);
-                  setShowCalendar(false);
-                }}
-              />
-            </View>
-          </BlurView>
-        </View>
-      </Modal>
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          minimumDate={new Date()}
+        />
+      )}
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="time"
+          display="default"
+          onChange={handleTimeChange}
+        />
+      )}
 
       <Modal
         visible={showDoctorDetails}
@@ -295,11 +272,9 @@ const BookAppointment = ({ navigation, route }) => {
                 loop={false}
                 style={styles.successAnimation}
               />
-              <Text style={styles.successText}>
-                {isRescheduling ? 'Appointment Rescheduled Successfully!' : 'Appointment Booked Successfully!'}
-              </Text>
+              <Text style={styles.successText}>Appointment Booked Successfully!</Text>
               <Text style={styles.successDetails}>
-                {`Doctor: ${selectedDoctor?.name}\nDate: ${selectedDate}\nTime: ${selectedTime}`}
+                {`Doctor: ${selectedDoctor?.name}\nDate: ${selectedDate.toLocaleDateString()}\nTime: ${selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
               </Text>
             </View>
           </BlurView>
@@ -314,41 +289,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1e293b',
   },
-  contentContainer: {
-    paddingBottom: 80,
-  },
   header: {
+    height: SCREEN_HEIGHT * 0.3,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
     padding: 20,
-    paddingTop: 50,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 20,
+    fontFamily: 'Poppins-Bold',
   },
-  doctorSelection: {
-    marginTop: 20,
+  content: {
+    padding: 20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginLeft: 20,
-    marginBottom: 10,
+    marginBottom: 15,
+    fontFamily: 'Rubik-Medium',
   },
   doctorList: {
-    paddingHorizontal: 10,
+    paddingBottom: 20,
   },
   doctorCard: {
     width: 160,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 15,
-    marginHorizontal: 10,
+    marginRight: 15,
     overflow: 'hidden',
+  },
+  selectedDoctorCard: {
+    borderColor: '#4CAF50',
+    borderWidth: 2,
   },
   doctorCardImage: {
     width: '100%',
     height: 120,
+    resizeMode: 'cover',
   },
   doctorCardDetails: {
     padding: 10,
@@ -357,10 +349,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Raleway-Bold',
   },
   doctorCardSpecialization: {
     color: '#CCCCCC',
     fontSize: 14,
+    fontFamily: 'Raleway-Regular',
   },
   doctorCardRating: {
     flexDirection: 'row',
@@ -370,51 +364,44 @@ const styles = StyleSheet.create({
   doctorCardRatingText: {
     color: '#FFFFFF',
     marginLeft: 5,
+    fontFamily: 'Rubik-Regular',
   },
-  dateSelection: {
+  selectedDoctorIndicator: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 12,
+  },
+dateSelection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 15,
-    margin: 20,
+    marginVertical: 10,
     padding: 15,
-    alignItems: 'center',
   },
   dateSelectionText: {
     color: '#FFFFFF',
     fontSize: 16,
-  },
-  timeSlots: {
-    marginTop: 20,
-  },
-  timeSlot: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
-    padding: 10,
-    marginHorizontal: 5,
-  },
-  selectedTimeSlot: {
-    backgroundColor: '#4CAF50',
-  },
-  timeSlotText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  selectedTimeSlotText: {
-    fontWeight: 'bold',
+    marginLeft: 10,
+    fontFamily: 'Rubik-Regular',
   },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 15,
-    margin: 20,
+    marginVertical: 10,
     padding: 15,
     color: '#FFFFFF',
     fontSize: 16,
+    fontFamily: 'Rubik-Regular',
   },
   severitySelection: {
     marginTop: 20,
   },
   severityOptions: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginTop: 10,
   },
   severityOption: {
@@ -429,9 +416,11 @@ const styles = StyleSheet.create({
   severityOptionText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontFamily: 'Raleway-Regular',
   },
   selectedSeverityOptionText: {
     fontWeight: 'bold',
+    fontFamily: 'Raleway-Bold',
   },
   bookButton: {
     backgroundColor: '#4CAF50',
@@ -444,6 +433,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   modalContainer: {
     flex: 1,
@@ -468,6 +458,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 20,
+    fontFamily: 'Poppins-Bold',
   },
   modalDoctorImage: {
     width: 120,
@@ -480,11 +471,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 5,
+    fontFamily: 'Raleway-Bold',
   },
   modalDoctorSpecialization: {
     fontSize: 16,
     color: '#CCCCCC',
     marginBottom: 10,
+    fontFamily: 'Raleway-Regular',
   },
   modalDoctorRating: {
     flexDirection: 'row',
@@ -495,11 +488,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginLeft: 5,
     fontSize: 16,
+    fontFamily: 'Rubik-Regular',
   },
   modalDoctorAbout: {
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: 'Rubik-Regular',
   },
   closeButton: {
     backgroundColor: '#4CAF50',
@@ -511,6 +506,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Bold',
   },
   successModalContent: {
     backgroundColor: '#2d3748',
@@ -529,12 +525,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     marginTop: 20,
+    fontFamily: 'Poppins-Bold',
   },
   successDetails: {
     fontSize: 16,
-    color: '#CCCCCC',
+    color: '#CCCCCC', 
     textAlign: 'center',
     marginTop: 10,
+    fontFamily: 'Rubik-Regular',
   },
 });
 
