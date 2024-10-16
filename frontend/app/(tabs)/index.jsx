@@ -151,7 +151,7 @@ export default function Dashboard() {
         <Text style={styles.smallCardValue}>{value}</Text>
       </View>
       <Text style={styles.smallCardTitle}>{title}</Text>
-      {icon && <Ionicons name={icon} size={24} color="#FFF" style={styles.smallCardIcon} />}
+      {icon && <Ionicons name={icon} size={24} color="#10b981" style={styles.smallCardIcon} />}
     </View>
   );
   return (
