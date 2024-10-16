@@ -46,11 +46,11 @@ const AddMedication = ({ navigation }) => {
     { name: 'Sertraline', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fa2f400086b2d51be/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
     { name: 'Simvastatin', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fa2fd002cdedfe35e/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
     { name: 'General pill', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fa7e50000b66b7ef9/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
-    { name: 'Paracetamol', url: 'https://example.com/paracetamol.jpg' },
-    { name: 'Amoxicillin', url: 'https://example.com/amoxicillin.jpg' },
-    { name: 'Omeprazole', url: 'https://example.com/omeprazole.jpg' },
-    { name: 'Metformin', url: 'https://example.com/metformin.jpg' },
-    { name: 'Lisinopril', url: 'https://example.com/lisinopril.jpg' },
+    { name: 'Paracetamol', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fb4dd003d5cca6244/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
+    { name: 'Amoxicillin', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fb510003464a09c60/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
+    { name: 'Omeprazole', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fb577000514fc5c89/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
+    { name: 'Metformin', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fb59a0039ea514bb7/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
+    { name: 'Lisinopril', url: 'https://cloud.appwrite.io/v1/storage/buckets/670fa2bd0016e53a0e6f/files/670fb5be0013646511b8/view?project=6704d37c003c8a2f6a36&project=6704d37c003c8a2f6a36&mode=admin' },
   ];
 
   const handleAddMedication = async () => {
@@ -77,7 +77,7 @@ const AddMedication = ({ navigation }) => {
       setTimeout(() => {
         setShowSuccess(false);
         navigation.goBack();
-      }, 2000);
+      }, 5000);
     } catch (error) {
       console.error('Error adding medication:', error);
       Alert.alert('Error', 'Failed to add medication. Please try again.');
@@ -300,13 +300,16 @@ const AddMedication = ({ navigation }) => {
 
       {showSuccess && (
         <View style={styles.successOverlay}>
+          <View style={styles.success}>
           <LottieView
             ref={animationRef}
-            source={require('../assets/animations/succ.json')}
+            source={require('../assets/animations/success.json')}
             autoPlay
             loop={false}
             style={styles.successAnimation}
           />
+          <Text style={styles.successText}>Medication added successfully!😊</Text>
+          </View>
         </View>
       )}
     </ScrollView>
@@ -544,14 +547,46 @@ sliderContainer: {
     },
     successOverlay: {
       ...StyleSheet.absoluteFillObject,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
     },
     successAnimation: {
       width: 200,
       height: 200,
+      position: 'absolute',
+      top: '70%',
+      left: '50%',
+      transform: [{ translateX: -100 }, { translateY: -100 }],
+      zIndex: 10,
     },
+    successText: {
+      color: '#FFFFFF',
+      fontSize: 24,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginTop: 20,
+      position: 'absolute',
+      top: '90%',
+      left: '50%',
+      transform: [{ translateX: -160 }, { translateY: 80 }],
+      zIndex: 10,
+    },
+    success :{
+      backgroundColor: '#FFF',
+      padding: 20,
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 5 },
+      shadowRadius: 10,
+      shadowOpacity: 0.3,
+      elevation: 5,
+      position: 'absolute',
+      top: '80%',
+      left: '80%',
+      transform: [{ translateX: -100 }, { translateY: -100 }],
+      zIndex: 10,
+    }
   });
 
 export default AddMedication;
