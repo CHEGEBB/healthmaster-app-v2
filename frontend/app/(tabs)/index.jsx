@@ -218,41 +218,65 @@ export default function Dashboard() {
       </View>
 
       {/* Today's Appointments section */}
-      <View style={styles.appointmentsContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Appointments</Text>
-          <TouchableOpacity onPress={() => router.push('/appointments')}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
+<View style={styles.appointmentsContainer}>
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>Today's Appointments</Text>
+    <TouchableOpacity onPress={() => router.push('/appointments')}>
+      <Text style={styles.seeAllText}>See All</Text>
+    </TouchableOpacity>
+  </View>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.appointmentsScroll}>
+    {appointments.length === 0 ? (
+      <TouchableOpacity onPress={() => router.push('/appointments')} style={styles.placeholderCard}>
+        <Image
+          source={require('../../assets/images/cards/3.jpeg')}
+          style={styles.placeholderImage}
+        />
+        <View style={styles.placeholderContent}>
+          <Ionicons name="add-circle" size={40} color="#4A90E2" />
+          <Text style={styles.placeholderText}>Appointments will appear here</Text>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.appointmentsScroll}>
-          {appointments.map((appointment) => (
-            <AppointmentCard 
-              key={appointment.$id} 
-              appointment={appointment} 
-              onPress={() => handleAppointmentPress(appointment)}
-            />
-          ))}
-        </ScrollView>
+      </TouchableOpacity>
+    ) : (
+      appointments.map((appointment) => (
+        <AppointmentCard 
+          key={appointment.$id} 
+          appointment={appointment} 
+          onPress={() => handleAppointmentPress(appointment)}
+        />
+      ))
+    )}
+  </ScrollView>
+</View>
+{/* Upcoming Schedule section */}
+<View style={styles.upcomingSchedule}>
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>Upcoming Schedule</Text>
+    <TouchableOpacity onPress={() => router.push('/appointments')}>
+      <Text style={styles.seeAllText}>See All</Text>
+    </TouchableOpacity>
+  </View>
+  {appointments.length === 0 ? (
+    <TouchableOpacity onPress={() => router.push('/appointments')} style={styles.smallPlaceholderCard}>
+      <Image
+        source={require('../../assets/images/cards/1.jpeg')}
+        style={styles.smallPlaceholderImage}
+      />
+      <View style={styles.smallPlaceholderContent}>
+        <Ionicons name="add-circle" size={24} color="#4A90E2" />
+        <Text style={styles.smallPlaceholderText}>Add upcoming schedules</Text>
       </View>
-
-      {/* Upcoming Schedule section */}
-      <View style={styles.upcomingSchedule}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Upcoming Schedule</Text>
-          <TouchableOpacity onPress={() => router.push('/appointments')}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        {appointments.map((appointment) => (
-          <UpcomingScheduleItem 
-            key={appointment.$id} 
-            appointment={appointment} 
-            onPress={() => handleAppointmentPress(appointment)}
-          />
-        ))}
-      </View>
-
+    </TouchableOpacity>
+  ) : (
+    appointments.map((appointment) => (
+      <UpcomingScheduleItem 
+        key={appointment.$id} 
+        appointment={appointment} 
+        onPress={() => handleAppointmentPress(appointment)}
+      />
+    ))
+  )}
+</View>
       {/* Medications section */}
       <View style={styles.medicationsContainer}>
         <View style={styles.sectionHeader}>
@@ -279,7 +303,7 @@ export default function Dashboard() {
       </View>
 
       <HealthStats />
-      <Reminders />
+      {/* <Reminders /> */}
 
       <Modal
         animationType="slide"
@@ -766,5 +790,67 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 15,
+  },
+  placeholderCard: {
+    width: 280,
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  placeholderImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    opacity: 0.3,
+  },
+  placeholderContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  placeholderText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+  },
+  smallPlaceholderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  smallPlaceholderImage: {
+    width: 80,
+    height: 80,
+    opacity: 0.3,
+  },
+  smallPlaceholderContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  smallPlaceholderText: {
+    marginLeft: 12,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
   },
 });
