@@ -231,4 +231,61 @@ export const fetchAppointments = async () => {
   }
 };
 
+export const createMedication = async (medicationDetails) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const medication = {
+      userId: currentUser.$id,
+      name: medicationDetails.name,
+      dosage: medicationDetails.dosage,
+      quantity: medicationDetails.quantity,
+      startDate: new Date(medicationDetails.startDate).toISOString(),
+      endDate: new Date(medicationDetails.endDate).toISOString(),
+      timeOfDay: medicationDetails.time, // Changed from 'time' to 'timeOfDay'
+      style: medicationDetails.style,
+      imageUrl: medicationDetails.imageUrl, // Added imageUrl
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await databases.createDocument(
+      Config.databaseId,
+      Config.medicationCollectionId,
+      ID.unique(),
+      medication
+    );
+
+    console.log('Medication created:', response);
+    return response;
+  } catch (error) {
+    console.error("Error creating medication:", error);
+    throw error;
+  }
+};
+
+export const fetchMedications = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const response = await databases.listDocuments(
+      Config.databaseId,
+      Config.medicationCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.orderDesc("createdAt")
+      ]
+    );
+
+    return response.documents;
+  } catch (error) {
+    console.error("Error fetching medications:", error);
+    throw error;
+  }
+};
 export { storage, databases };
