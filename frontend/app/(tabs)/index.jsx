@@ -136,27 +136,35 @@ export default function Dashboard() {
   }, [fetchUserData, fetchAppointmentsData]);
 
   const medications = [
-    { name: 'Aspirin', dosage: '100mg', image: require('../../assets/images/medication1.jpg') },
-    { name: 'Lisinopril', dosage: '10mg', image: require('../../assets/images/medication2.jpg') },
-    { name: 'Metformin', dosage: '500mg', image: require('../../assets/images/medication3.jpg') },
+    { name: 'Aspirin', dosage: '100mg', image: require('../../assets/images/aspirin.jpeg') },
+    { name: 'Lisinopril', dosage: '10mg', image: require('../../assets/images/lisinopril.jpeg') },
+    { name: 'Metformin', dosage: '500mg', image: require('../../assets/images/metformin.jpeg') },
   ];
 
   const importantMedications = [
-    { name: 'Aspirin', time: '8:00 AM', image: require('../../assets/images/medication1.jpg') },
-    { name: 'Lisinopril', time: '12:00 PM', image: require('../../assets/images/medication2.jpg') },
+    { name: 'Aspirin', time: '8:00 AM', image: require('../../assets/images/aspirin.jpeg') },
+    { name: 'Lisinopril', time: '12:00 PM', image: require('../../assets/images/lisinopril.jpeg') },
   ];
-
+  const SmallCard = ({ title, value, icon }) => (
+    <View style={styles.smallCard}>
+      <View style={styles.smallCardCircle}>
+        <Text style={styles.smallCardValue}>{value}</Text>
+      </View>
+      <Text style={styles.smallCardTitle}>{title}</Text>
+      {icon && <Ionicons name={icon} size={24} color="#FFF" style={styles.smallCardIcon} />}
+    </View>
+  );
   return (
     <ScrollView contentContainerStyle={styles.contentContainer} style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* Header section */}
       <ImageBackground
-        source={require('../../assets/images/3.jpeg')}
+        source={require('../../assets/images/bgh.jpeg')}
         style={styles.headerContainer}
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']}
+          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
           style={styles.headerOverlay}
         >
           <View style={styles.headerContent}>
@@ -200,6 +208,14 @@ export default function Dashboard() {
           </View>
         </LinearGradient>
       </ImageBackground>
+
+      
+ {/* Stats section */}
+ <View style={styles.statsContainer}>
+        <SmallCard title="Adherence" value="85%" icon="checkmark-circle-outline" />
+        <SmallCard title="Past Visits" value="12" icon="time-outline" />
+        <SmallCard title="Plan" value="Gold" icon="star" />
+      </View>
 
       {/* Today's Appointments section */}
       <View style={styles.appointmentsContainer}>
@@ -320,7 +336,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: '100%',
-    height: 300,
+    height: 330,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     overflow: 'hidden',
@@ -337,7 +353,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 90,
   },
   profileContainer: {
     flexDirection: 'row',
