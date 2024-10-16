@@ -7,6 +7,10 @@
     "icon": "./assets/images/con.png",
     "scheme": "com.health-master.healthmaster",
     "userInterfaceStyle": "automatic",
+    "extra": {
+      "GOOGLE_CLIENT_ID": "578899311616-u7vjdsgh4fgatcel2a80cftq517fg0pt.apps.googleusercontent.com",
+      "GOOGLE_REDIRECT_URI": "https://auth.expo.io/@phil_g/healthmaster"
+    },
     "splash": {
       "image": "./assets/images/con.png",
       "resizeMode": "contain",

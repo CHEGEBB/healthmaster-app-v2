@@ -71,7 +71,7 @@ const AddMedication = ({ navigation }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
        <View style={styles.ImageWrapper}>
       <ImageBackground
-        source={require('../assets/images/register.png')}
+        source={require('../assets/images/md.jpeg')}
         style={styles.header}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -92,6 +92,19 @@ const AddMedication = ({ navigation }) => {
               placeholderTextColor="#9CA3AF"
               value={medicationName}
               onChangeText={setMedicationName}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Quantity</Text>
+          <View style={styles.textInputContainer}>
+            <Ionicons name="flask-outline" size={24} color="#6B7280" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="eg 200mg"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="numeric"
             />
           </View>
         </View>

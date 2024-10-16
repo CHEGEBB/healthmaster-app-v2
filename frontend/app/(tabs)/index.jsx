@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ImageBackground, TextInput, TouchableOpacity, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ImageBackground, TextInput, TouchableOpacity, Image, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import Medlist from "../../components/Medlist";
@@ -259,7 +259,7 @@ export default function Dashboard() {
   {appointments.length === 0 ? (
     <TouchableOpacity onPress={() => router.push('/appointments')} style={styles.smallPlaceholderCard}>
       <Image
-        source={require('../../assets/images/cards/1.jpeg')}
+        source={require('../../assets/images/cards/6.jpeg')}
         style={styles.smallPlaceholderImage}
       />
       <View style={styles.smallPlaceholderContent}>
@@ -304,6 +304,7 @@ export default function Dashboard() {
 
       <HealthStats />
       {/* <Reminders /> */}
+
 
       <Modal
         animationType="slide"
