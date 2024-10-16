@@ -1,77 +1,119 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ImageBackground, TextInput, TouchableOpacity, Image, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import Medlist from "../../components/Medlist";
-import Appointments from "../../components/Appointments";
 import HealthStats from "../../components/HealthStats";
 import Reminders from "../../components/Reminders";
-import { useNavigation } from '@react-navigation/native';
-import { getCurrentUser, avatars } from '../../appwrite';
+import { getCurrentUser, fetchAppointments } from '../../appwrite';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const ScheduleItem = ({ schedule, openModal }) => {
-  if (!schedule) return null;
+const cardImages = [
+  require('../../assets/images/cards/1.jpeg'),
+  require('../../assets/images/cards/2.jpeg'),
+  require('../../assets/images/cards/3.jpeg'),
+  require('../../assets/images/cards/4.jpeg'),
+  require('../../assets/images/cards/5.jpeg'),
+];
 
+const getRandomImage = () => cardImages[Math.floor(Math.random() * cardImages.length)];
+
+const AppointmentCard = ({ appointment, onPress }) => {
   return (
-    <View style={styles.scheduleItem}>
-      <Image source={schedule.image} style={styles.doctorImage} />
-      <View style={styles.scheduleDetails}>
-        <Text style={styles.scheduleItemTitle}>{schedule.time}</Text>
-        <Text style={styles.scheduleItemText}>{schedule.doctor}</Text>
-      </View>
-      <TouchableOpacity onPress={() => openModal(schedule)}>
-        <Ionicons name="ellipsis-vertical" size={24} color="#777" />
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity style={styles.appointmentCard} onPress={onPress}>
+      <ImageBackground source={getRandomImage()} style={styles.appointmentImage}>
+        <LinearGradient
+          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
+          style={styles.appointmentGradient}
+        >
+          <View style={styles.appointmentInfo}>
+            <Text style={styles.appointmentTime}>{new Date(appointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text style={styles.appointmentDoctor}>{appointment.doctorName}</Text>
+            <Text style={styles.appointmentSpecialty}>{appointment.doctorSpecialization}</Text>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
+    </TouchableOpacity>
   );
 };
 
-const ActionCard = ({ icon, text, count, style }) => (
-  <View style={[styles.card, style]}>
-    <Ionicons name={icon} size={30} color="#FFF" />
-    <Text style={styles.cardText}>{text}</Text>
-    <Text style={styles.cardCount}>{count}</Text>
+const UpcomingScheduleItem = ({ appointment, onPress }) => {
+  return (
+    <TouchableOpacity style={styles.scheduleItem} onPress={onPress}>
+      <Image source={getRandomImage()} style={styles.scheduleDoctorImage} />
+      <View style={styles.scheduleDetails}>
+        <Text style={styles.scheduleItemTitle}>{new Date(appointment.date).toLocaleString()}</Text>
+        <Text style={styles.scheduleItemText}>{appointment.doctorName}</Text>
+        <Text style={styles.scheduleItemSpecialty}>{appointment.doctorSpecialization}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={24} color="#fff" />
+    </TouchableOpacity>
+  );
+};
+
+const MedicationCard = ({ medication }) => (
+  <View style={styles.medicationCard}>
+    <Image source={medication.image} style={styles.medicationImage} />
+    <View style={styles.medicationInfo}>
+      <Text style={styles.medicationName}>{medication.name}</Text>
+      <Text style={styles.medicationDosage}>{medication.dosage}</Text>
+    </View>
+  </View>
+);
+
+const ImportantMedicationItem = ({ medication }) => (
+  <View style={styles.importantMedicationItem}>
+    <Image source={medication.image} style={styles.importantMedicationImage} />
+    <View style={styles.importantMedicationInfo}>
+      <Text style={styles.importantMedicationName}>{medication.name}</Text>
+      <Text style={styles.importantMedicationTime}>{medication.time}</Text>
+    </View>
+    <TouchableOpacity style={styles.takeMedicationButton}>
+      <Text style={styles.takeMedicationButtonText}>Take</Text>
+    </TouchableOpacity>
   </View>
 );
 
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
-  const [appointmentsCount, setAppointmentsCount] = useState(0);
-  const [alarmsCount, setAlarmsCount] = useState(0);
-  const [scheduleCount, setScheduleCount] = useState(0);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [appointments, setAppointments] = useState([]);
   const [greeting, setGreeting] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const navigation = useNavigation();
+  const router = useRouter();
 
   const handleProfilePress = useCallback(() => {
-    navigation.navigate('profile');
-  }, [navigation]);
+    router.push('/profile');
+  }, [router]);
+
+  const handleAppointmentPress = useCallback((appointment) => {
+    setSelectedAppointment(appointment);
+    setModalVisible(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+    setSelectedAppointment(null);
+  }, []);
+
+  const handleCancelAppointment = useCallback(() => {
+    console.log('Cancelling appointment:', selectedAppointment.$id);
+    handleCloseModal();
+  }, [selectedAppointment, handleCloseModal]);
+
+  const handleCompleteAppointment = useCallback(() => {
+    console.log('Completing appointment:', selectedAppointment.$id);
+    handleCloseModal();
+  }, [selectedAppointment, handleCloseModal]);
 
   const fetchUserData = useCallback(async () => {
     try {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         setUserData(currentUser);
-        setAppointmentsCount(currentUser.appointmentsCount || 0);
-        setAlarmsCount(currentUser.alarmsCount || 0);
-        setScheduleCount(currentUser.scheduleCount || 0);
-
-        // Get user's avatar
-        if (currentUser.username && avatars?.getInitials) {
-          const avatarImage = avatars.getInitials(currentUser.username);
-          setAvatarUrl(avatarImage?.href || null);
-        }
-        
-
-        // Set greeting based on time of day
         const hour = new Date().getHours();
-        let greetingText = '';
-        if (hour < 12) greetingText = 'Good morning';
-        else if (hour < 18) greetingText = 'Good afternoon';
-        else greetingText = 'Good evening';
+        let greetingText = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
         setGreeting(`${greetingText}, ${currentUser.username || 'User'}👋!`);
       }
     } catch (error) {
@@ -79,151 +121,190 @@ export default function Dashboard() {
     }
   }, []);
 
+  const fetchAppointmentsData = useCallback(async () => {
+    try {
+      const allAppointments = await fetchAppointments();
+      setAppointments(allAppointments);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUserData();
-  }, [fetchUserData]);
+    fetchAppointmentsData();
+  }, [fetchUserData, fetchAppointmentsData]);
 
-  const openModal = useCallback((schedule) => {
-    setSelectedSchedule(schedule);
-    setModalVisible(true);
-  }, []);
+  const medications = [
+    { name: 'Aspirin', dosage: '100mg', image: require('../../assets/images/medication1.jpg') },
+    { name: 'Lisinopril', dosage: '10mg', image: require('../../assets/images/medication2.jpg') },
+    { name: 'Metformin', dosage: '500mg', image: require('../../assets/images/medication3.jpg') },
+  ];
 
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-    setSelectedSchedule(null);
-  }, []);
-
-  const schedules = [
-    { time: "10:00 AM", doctor: "Dr. John Wong", image: require('../../assets/images/as2.jpeg') },
-    { time: "12:00 PM", doctor: "Dr. Jane Smith", image: require('../../assets/images/am.jpeg') },
-    { time: "14:00 PM", doctor: "Dr. Mike Johnson", image: require('../../assets/images/ab3.jpeg') }
+  const importantMedications = [
+    { name: 'Aspirin', time: '8:00 AM', image: require('../../assets/images/medication1.jpg') },
+    { name: 'Lisinopril', time: '12:00 PM', image: require('../../assets/images/medication2.jpg') },
   ];
 
   return (
     <ScrollView contentContainerStyle={styles.contentContainer} style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-
-      <View style={styles.headerContainer}>
-        <ImageBackground
-          source={require('../../assets/images/register.png')}
-          style={styles.imageContainer}
-          imageStyle={styles.imageStyle}
+      
+      {/* Header section */}
+      <ImageBackground
+        source={require('../../assets/images/3.jpeg')}
+        style={styles.headerContainer}
+      >
+        <LinearGradient
+          colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.8)']}
+          style={styles.headerOverlay}
         >
-          <View style={styles.overlay} />
-
-          <View style={styles.row}>
-            <Text style={styles.headerText}>Hi 👋 <Text style={styles.profileName2}>
-                    {userData?.username || 'User'}
-                  </Text>
-
-            </Text>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={24} color="#FFF" />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.healthText}>How is Your Health Today?</Text>
-
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={20} color="#555" style={styles.iconLeft} />
-            <TextInput
-              placeholder="Search"
-              placeholderTextColor="#777"
-              style={styles.input}
-            />
-            <TouchableOpacity>
-              <Ionicons name="mic-outline" size={20} color="#555" style={styles.iconRight} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.dateRow}>
-            <View style={styles.dateSection}>
-              <Ionicons name="calendar-outline" size={20} color="#FFF" />
-              <Text style={styles.dateText}>Today is {new Date().toLocaleDateString()}</Text>
+          <View style={styles.headerContent}>
+            <View style={styles.profileSection}>
+              <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
+                <Image source={{ uri: userData?.avatar }} style={styles.profileImage} />
+                <Text style={styles.profileName}>{userData?.username || 'User'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconButton}>
+                <Ionicons name="notifications-outline" size={24} color="#FFF" />
+              </TouchableOpacity>
             </View>
-            <View style={styles.profCont}>
-            <TouchableOpacity style={styles.profileContainer} onPress={handleProfilePress}>
-              {avatarUrl ? (
-                <Image
-                  source={{ uri: avatarUrl }}
-                  style={styles.profileImage}
-                />
-              ) : (
-                <View style={[styles.profileImage, { backgroundColor: '#ccc', alignItems: 'center', justifyContent: 'center' }]}>
-                  <Text style={{ color: '#fff', fontSize: 18 }}>{userData?.username?.charAt(0).toUpperCase() || 'U'}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <View>
-            <Text style={styles.profileName}>
-                    {userData?.username || 'User'}
-                  </Text>
+
+            <Text style={styles.headerText}>{greeting}</Text>
+
+            <View style={styles.searchBar}>
+              <Ionicons name="search-outline" size={20} color="#fff" style={styles.iconLeft} />
+              <TextInput
+                placeholder="Search"
+                placeholderTextColor="#ccc"
+                style={styles.input}
+              />
+              <TouchableOpacity>
+                <Ionicons name="mic-outline" size={20} color="#fff" style={styles.iconRight} />
+              </TouchableOpacity>
             </View>
-            </View>
-          </View>
 
-          <View style={styles.actionRow}>
-            <ActionCard icon="calendar-outline" text="Appointments" count={appointmentsCount} style={styles.cardAppointments} />
-            <ActionCard icon="alarm-outline" text="Alarms" count={alarmsCount} style={styles.cardAlarms} />
-            <ActionCard icon="list-outline" text="Schedule" count={scheduleCount} style={styles.cardSchedule} />
-          </View>
-        </ImageBackground>
-      </View>
-
-      <View style={styles.appointmentsContainer}>
-        <Appointments />
-      </View>
-
-      <View style={styles.upcomingSchedule}>
-        <View style={styles.upcomingScheduleHeader}>
-          <Text style={styles.upcomingScheduleTitle}>Upcoming Schedule</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {schedules.map(schedule => (
-          <ScheduleItem key={schedule.time} schedule={schedule} openModal={openModal} />
-        ))}
-      </View>
-
-      {selectedSchedule && (
-        <Modal visible={modalVisible} transparent={true} animationType="slide">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{selectedSchedule.doctor}</Text>
-              <Text style={styles.modalTime}>Scheduled at {selectedSchedule.time}</Text>
-              <Image source={selectedSchedule.image} style={styles.modalDoctorImage} />
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.modalButtonDone}>
-                  <Ionicons name="checkmark-outline" size={20} color="#FFF" />
-                  <Text style={styles.modalButtonText}>Done</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalButtonCancel}>
-                  <Ionicons name="close-outline" size={20} color="#FFF" />
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
+            <View style={styles.calendarSection}>
+              <View style={styles.dateSection}>
+                <Ionicons name="calendar-outline" size={20} color="#FFF" />
+                <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
               </View>
-
-              <TouchableOpacity style={styles.modalCloseButton} onPress={closeModal}>
-                <Ionicons name="close-outline" size={24} color="#FFF" />
+              <TouchableOpacity 
+                style={styles.appointmentCountSection}
+                onPress={() => router.push('/appointments')}
+              >
+                <Ionicons name="calendar" size={20} color="#FFF" style={styles.appointmentCountIcon} />
+                <Text style={styles.appointmentCountText}>{appointments.length} Appointments</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      )}
+        </LinearGradient>
+      </ImageBackground>
 
-      <View style={styles.medContainer}>
-        <Medlist />
-      </View>
-      <View style={styles.myReminders}>
-        <Reminders />
+      {/* Today's Appointments section */}
+      <View style={styles.appointmentsContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Today's Appointments</Text>
+          <TouchableOpacity onPress={() => router.push('/appointments')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.appointmentsScroll}>
+          {appointments.map((appointment) => (
+            <AppointmentCard 
+              key={appointment.$id} 
+              appointment={appointment} 
+              onPress={() => handleAppointmentPress(appointment)}
+            />
+          ))}
+        </ScrollView>
       </View>
 
-      <View style={styles.healthstats}>
-        <HealthStats />
+      {/* Upcoming Schedule section */}
+      <View style={styles.upcomingSchedule}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Upcoming Schedule</Text>
+          <TouchableOpacity onPress={() => router.push('/appointments')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        {appointments.map((appointment) => (
+          <UpcomingScheduleItem 
+            key={appointment.$id} 
+            appointment={appointment} 
+            onPress={() => handleAppointmentPress(appointment)}
+          />
+        ))}
       </View>
+
+      {/* Medications section */}
+      <View style={styles.medicationsContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My Medications</Text>
+          <TouchableOpacity onPress={() => router.push('/medications')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.medicationGrid}>
+          {medications.map((medication, index) => (
+            <MedicationCard key={index} medication={medication} />
+          ))}
+        </View>
+      </View>
+
+      {/* Today's Important Medications section */}
+      <View style={styles.importantMedicationsContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Today's Important Medications</Text>
+        </View>
+        {importantMedications.map((medication, index) => (
+          <ImportantMedicationItem key={index} medication={medication} />
+        ))}
+      </View>
+
+      <HealthStats />
+      <Reminders />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedAppointment && (
+              <>
+                <Image 
+                  source={getRandomImage()} 
+                  style={styles.modalDoctorImage} 
+                />
+                <Text style={styles.modalDoctorName}>{selectedAppointment.doctorName}</Text>
+                <Text style={styles.modalSpecialty}>{selectedAppointment.doctorSpecialization}</Text>
+                <Text style={styles.modalTime}>{new Date(selectedAppointment.date).toLocaleString()}</Text>
+                <Text style={styles.modalReason}>Reason: {selectedAppointment.reason}</Text>
+                <Text style={styles.modalSeverity}>Severity: {selectedAppointment.severity}</Text>
+                <Text style={styles.modalStatus}>Status: {selectedAppointment.status}</Text>
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.modalButton} onPress={handleCancelAppointment}>
+                    <Ionicons name="close-circle-outline" size={24} color="#FFF" />
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalButton} onPress={handleCompleteAppointment}>
+                    <Ionicons name="checkmark-circle-outline" size={24} color="#FFF" />
+                    <Text style={styles.modalButtonText}>Complete</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            
+            <TouchableOpacity style={styles.modalCloseButton} onPress={handleCloseModal}>
+              <Ionicons name="close" size={24} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -231,255 +312,316 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2E383F',
+    backgroundColor: '#1F2937',
   },
- 
   contentContainer: {
     flexGrow: 1,
     paddingBottom: 80,
-
   },
   headerContainer: {
     width: '100%',
-    height: 400,
-    position: 'relative',
-  },
-  imageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
+    height: 300,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
-  profileName:{
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginLeft: 10,
+  headerOverlay: {
+    flex: 1,
+    padding: 20,
   },
-  profCont:{
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
+  headerContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  imageStyle: {
-    resizeMode: 'cover',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 100, 0.2)',
-  },
-  row: {
+  profileSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 10,
+    marginBottom: 20,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  profileName: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  iconButton: {
+    padding: 5,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
-  },
-  iconButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 10,
-    borderRadius: 50,
-  },
-  healthText: {
-    fontSize: 18,
-    color: '#FFF',
-    marginTop: 10,
-    paddingHorizontal: 20,
+    fontFamily: 'Raleway-Bold',
+    marginBottom: 15,
   },
   searchBar: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    marginTop: 15,
-    height: 40,
-    marginHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  input: {
+    flex: 1,
+    color: '#FFF',
+    paddingVertical: 10,
+    marginLeft: 10,
   },
   iconLeft: {
     marginRight: 10,
   },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#555',
-  },
   iconRight: {
     marginLeft: 10,
   },
-  dateRow: {
+  calendarSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 10,
+    alignItems: 'center',
   },
   dateSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   dateText: {
-    fontSize: 16,
     color: '#FFF',
     marginLeft: 5,
   },
-  profileContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  actionRow: {
+  appointmentCountSection: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 15,
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 15,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
   },
-  card: {
-    backgroundColor: '#4A4E69',
+  appointmentCountIcon: {
+    marginRight: 5,
+  },
+  appointmentCountText: {
+    color: '#FFF',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+  },
+  smallCard: {
+    alignItems: 'center',
+    backgroundColor: '#374151',
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 5,
+    width: '30%',
   },
-  cardAppointments: {
-    backgroundColor: '#FF6F61',
-  },
-  cardAlarms: {
-    backgroundColor: '#6B5B95',
-  },
-  cardSchedule: {
-    backgroundColor: '#88B04B',
-  },
-  cardText: {
-    color: '#FFF',
-    fontSize: 18,
-    marginTop: 5,
-  },
-  cardCount: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  appointmentsContainer: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  upcomingSchedule: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  upcomingScheduleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  smallCardCircle: {
+    backgroundColor: '#4B5563',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
-  upcomingScheduleTitle: {
-    fontSize: 20,
+  smallCardValue: {
     color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  smallCardTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  smallCardIcon: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  medicationContainer: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   seeAllText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+  },
+  medicationScroll: {
+    paddingLeft: 20,
+  },
+  medicationCard: {
+    width: 150,
+    height: 200,
+    marginRight: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  medicationImage: {
+    width: '100%',
+    height: '75%',
+  },
+  medicationInfo: {
+    padding: 10,
+    backgroundColor: '#374151',
+  },
+  medicationName: {
     color: '#FFF',
     fontSize: 14,
     fontWeight: 'bold',
   },
+  medicationDosage: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  appointmentsContainer: {
+    marginBottom: 20,
+  },
+  appointmentsScroll: {
+    paddingLeft: 20,
+  },
+  appointmentCard: {
+    width: 200,
+    height: 250,
+    marginRight: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  appointmentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  appointmentGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 15,
+  },
+  appointmentInfo: {
+    marginTop: 'auto',
+  },
+  appointmentTime: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  appointmentDoctor: {
+    color: '#FFF',
+    fontSize: 14,
+  },
+  appointmentSpecialty: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  placeholderContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#FFF',
+    fontSize: 16,
+    marginTop: 10,
+  },
+  upcomingSchedule: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
   scheduleItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#333',
+    backgroundColor: '#374151',
     borderRadius: 10,
+    padding: 15,
     marginBottom: 10,
   },
-  doctorImage: {
+  scheduleDoctorImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+    marginRight: 15,
   },
   scheduleDetails: {
     flex: 1,
   },
   scheduleItemTitle: {
-    fontSize: 16,
     color: '#FFF',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   scheduleItemText: {
+    color: '#FFF',
     fontSize: 14,
-    color: '#AAA',
   },
-  modalContainer: {
+  scheduleItemSpecialty: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
+    backgroundColor: '#374151',
+    borderRadius: 20,
     padding: 20,
+    width: '80%',
     alignItems: 'center',
   },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  modalDoctorImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 15,
   },
-  modalTime: {
+  modalDoctorName: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  modalSpecialty: {
+    color: '#9CA3AF',
     fontSize: 16,
     marginBottom: 10,
   },
-  modalDoctorImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+  modalTime: {
+    color: '#FFF',
+    fontSize: 18,
+    marginBottom: 20,
   },
-  modalActions: {
+  modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     width: '100%',
-    marginVertical: 20,
   },
-  modalButtonDone: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
+  modalButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginRight: 5,
-  },
-  modalButtonCancel: {
-    backgroundColor: '#F44336',
+    backgroundColor: '#4B5563',
+    borderRadius: 10,
     padding: 10,
-    borderRadius: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginLeft: 5,
   },
   modalButtonText: {
     color: '#FFF',
@@ -490,13 +632,123 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
   },
-  medContainer: {
-    marginTop: 20,
+  modalReason: {
+    color: '#FFF',
+    fontSize: 16,
+    marginBottom: 5,
   },
-  myReminders: {
-    marginTop: 20,
+  modalSeverity: {
+    color: '#FFF',
+    fontSize: 16,
+    marginBottom: 5,
   },
-  healthstats: {
-    marginTop: 20,
+  modalStatus: {
+    color: '#FFF',
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  medicationsContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  medicationGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  medicationCard: {
+    width: '48%',
+    aspectRatio: 0.8,
+    marginBottom: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#374151',
+  },
+  medicationImage: {
+    width: '100%',
+    height: '75%',
+  },
+  medicationInfo: {
+    padding: 10,
+  },
+  medicationName: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  medicationDosage: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  placeholderMedicationContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  importantMedicationsContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  importantMedicationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#374151',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  importantMedicationImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
+  },
+  importantMedicationInfo: {
+    flex: 1,
+  },
+  importantMedicationName: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  importantMedicationTime: {
+    color: '#9CA3AF',
+    fontSize: 14,
+  },
+  takeMedicationButton: {
+    backgroundColor: '#4B5563',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 15,
+  },
+  takeMedicationButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  appointmentCard: {
+    width: 200,
+    height: 250,
+    marginRight: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  appointmentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#374151',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  scheduleDoctorImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
 });
