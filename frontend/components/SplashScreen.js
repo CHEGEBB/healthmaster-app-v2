@@ -102,7 +102,7 @@ const SplashScreen = () => {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require('../assets/images/new6.jpg')}
+        source={require('../assets/images/md.jpeg')}
         style={styles.backgroundImage}
       >
         <View style={styles.overlay}>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -162,9 +162,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoWrapper: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#9ca3af',
     borderRadius: 75,
     padding: 10,
+    borderColor : '#14b8a6',
+    borderWidth: 4,
   },
   logo: {
     width: 120,
@@ -173,17 +175,17 @@ const styles = StyleSheet.create({
   title: {
     color: 'white',
     fontSize: 40,
-    fontWeight: 'bold',
+    fontWeight: '600',
     textAlign: 'center',
     marginBottom: 10,
-    fontFamily: 'Outfit-Bold',
+    fontFamily: 'Sora-SemiBold',
   },
   tagline: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    fontFamily: 'Poppins-Regular',
+    fontFamily: 'Rubik-Regular',
   },
   animatedPhraseContainer: {
     height: 30,
