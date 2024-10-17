@@ -175,24 +175,24 @@ const AddMedication = ({ navigation }) => {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Medication Dosage</Text>
-          <View style={styles.sliderContainer}>
-            <Text style={styles.sliderLabel}>1</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={1}
-              maximumValue={3}
-              step={1}
-              minimumTrackTintColor="#3B82F6"
-              maximumTrackTintColor="#1F2937"
-              thumbTintColor="#3B82F6"
-              value={dosage}
-              onValueChange={setDosage}
-            />
-            <Text style={styles.sliderLabel}>3</Text>
-          </View>
-          <Text style={styles.dosageText}>{`${dosage} time${dosage > 1 ? 's' : ''} per day`}</Text>
-        </View>
+  <Text style={styles.label}>Medication Dosage</Text>
+  <View style={styles.sliderContainer}>
+    <Text style={styles.sliderLabel}>1</Text>
+    <Slider
+      style={styles.slider}
+      minimumValue={1}
+      maximumValue={3}
+      step={1}
+      minimumTrackTintColor="#3B82F6"
+      maximumTrackTintColor="#1F2937"
+      thumbTintColor="#3B82F6"
+      value={Number(dosage)}
+      onValueChange={(value) => setDosage(value.toString())}
+    />
+    <Text style={styles.sliderLabel}>3</Text>
+  </View>
+  <Text style={styles.dosageText}>{`${dosage} time${Number(dosage) > 1 ? 's' : ''} per day`}</Text>
+</View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Medication Duration</Text>

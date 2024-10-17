@@ -28,6 +28,8 @@ const EditMedicationModal = ({ visible, medication, onClose, onUpdate }) => {
   const [endDate, setEndDate] = useState(new Date(medication?.endDate || Date.now()));
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
 
   const handleUpdate = async () => {
     try {
@@ -274,12 +276,12 @@ const MedicationOverview = ({ navigation }) => {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.medicationCard}>
+    <View style={styles.medicationCardEmpty}>
       <TouchableOpacity
         style={[styles.emptyStateContainer]}
         onPress={() => navigation.navigate('AddMedication')}
       >
-        <Feather name="plus-circle" size={48} color="#94a3b8" />
+        <Feather name="plus-circle" size={68} color="#DDD" />
         <Text style={styles.emptyStateText}>Add Your First Medication</Text>
       </TouchableOpacity>
     </View>
@@ -753,15 +755,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  medicationCard: {
-    width: '48%',
-    backgroundColor: '#134e4a',
-    borderRadius: 15,
-    marginBottom: 15,
-    overflow: 'hidden',
+  medicationCardEmpty: {
+    width: '60%',
+    height: 160,
+    margin: 16,
+    borderRadius: 12,
+    backgroundColor: '#0d9488',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    aspectRatio: 1.5,
+    top: 30,
+  },
+  emptyStateText: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    fontFamily : "Raleway-SemiBold",
+    textAlign: 'center',
   },
   medicationInfo: {
     padding: 10,
+ 
   },
   modalOverlay: {
     flex: 1,

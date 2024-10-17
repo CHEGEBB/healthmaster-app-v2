@@ -245,9 +245,9 @@ export const createMedication = async (medicationDetails) => {
       quantity: medicationDetails.quantity,
       startDate: new Date(medicationDetails.startDate).toISOString(),
       endDate: new Date(medicationDetails.endDate).toISOString(),
-      timeOfDay: medicationDetails.time, // Changed from 'time' to 'timeOfDay'
+      timeOfDay: medicationDetails.time,
       style: medicationDetails.style,
-      imageUrl: medicationDetails.imageUrl, // Added imageUrl
+      imageUrl: medicationDetails.imageUrl, 
       createdAt: new Date().toISOString(),
     };
 
