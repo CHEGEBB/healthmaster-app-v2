@@ -71,7 +71,7 @@ export default function Layout() {
     async function prepare() {
       try {
         await SplashScreen.preventAutoHideAsync();
-        await new Promise(resolve => setTimeout(resolve, 700000));
+        await new Promise(resolve => setTimeout(resolve, 7000));
       } catch (e) {
         console.warn(e);
       } finally {
