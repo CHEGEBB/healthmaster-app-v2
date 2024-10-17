@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFF',
-    fontFamily: 'Raleway-Bold',
+    fontFamily: 'Sora-SemiBold',
     marginBottom: 15,
   },
   searchBar: {

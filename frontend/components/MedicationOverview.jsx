@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   },
   medicationCard: {
     width: '48%',
-    height: 250,
+    height: 200,
     backgroundColor: '#134e4a',
     borderRadius: 15,
     marginBottom: 15,
@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
   },
   cardActionButtonsVertical: {
     position: 'absolute',
-    top: "110%",
+    top: 10,
     right: 4,
     flexDirection: 'column',
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
