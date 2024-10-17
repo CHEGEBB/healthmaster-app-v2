@@ -512,9 +512,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingBottom: 50,
   },
   medicationCard: {
     width: '48%',
+    height: 250,
     backgroundColor: '#134e4a',
     borderRadius: 15,
     marginBottom: 15,
@@ -868,12 +870,13 @@ const styles = StyleSheet.create({
   },
   cardActionButtonsVertical: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: "110%",
+    right: 4,
     flexDirection: 'column',
     backgroundColor: 'rgba(15, 23, 42, 0.75)',
     borderRadius: 20,
     padding: 4,
+    gap: 6,
   },
   placeholderCard: {
     height: 200,
