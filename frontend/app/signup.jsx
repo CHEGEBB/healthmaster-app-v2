@@ -6,7 +6,6 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import LottieView from 'lottie-react-native';
 import { createUser } from '../appwrite';
 
 const { height, width } = Dimensions.get('window');
@@ -64,9 +63,7 @@ export default function SignUp() {
     setPasswordStrength(calculatePasswordStrength(text));
   };
 
-  const isPasswordValid = () => {
-    return passwordStrength >= 2; 
-  };
+  const isPasswordValid = () => passwordStrength >= 2;
 
   const isEmailValid = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -128,14 +125,11 @@ export default function SignUp() {
       {[0, 1, 2, 3].map((index) => (
         <View
           key={index}
-          style={[
-            styles.strengthBarSegment,
-            {
-              backgroundColor: index < passwordStrength 
-                ? passwordStrengthLabels[passwordStrength].color 
-                : '#444'
-            }
-          ]}
+          style={[styles.strengthBarSegment, {
+            backgroundColor: index < passwordStrength 
+              ? passwordStrengthLabels[passwordStrength].color 
+              : '#444',
+          }]}
         />
       ))}
     </View>
@@ -144,11 +138,7 @@ export default function SignUp() {
   const renderInput = (icon, placeholder, value, setValue, keyboardType = 'default', secureTextEntry = false, isPassword = false) => (
     <View>
       <Animated.View
-        style={[
-          styles.inputContainer,
-          focusedInput === placeholder && styles.focusedInput,
-          { transform: [{ translateY: slideAnim }] }
-        ]}
+        style={[styles.inputContainer, focusedInput === placeholder && styles.focusedInput, { transform: [{ translateY: slideAnim }] }]}
       >
         <Ionicons name={icon} size={24} color="#4BE3AC" style={styles.icon} />
         <TextInput
@@ -166,10 +156,7 @@ export default function SignUp() {
       {isPassword && password.length > 0 && (
         <View style={styles.passwordFeedbackContainer}>
           {renderPasswordStrengthBar()}
-          <Text style={[
-            styles.strengthText,
-            { color: passwordStrengthLabels[passwordStrength].color }
-          ]}>
+          <Text style={[styles.strengthText, { color: passwordStrengthLabels[passwordStrength].color }]}>
             {passwordStrengthLabels[passwordStrength].label}
           </Text>
           <Text style={styles.passwordRequirements}>
@@ -187,32 +174,24 @@ export default function SignUp() {
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView 
-        contentContainerStyle={styles.scrollViewContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollViewContent} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back-circle-outline" size={32} color="#fff" />
         </TouchableOpacity>
         <View style={styles.imageWrapper}>
-          <ImageBackground
-            source={require('../assets/images/register.png')}
-            style={styles.Imagecontainer}
-          >
+          <ImageBackground source={require('../assets/images/6.jpeg')} style={styles.Imagecontainer}>
             <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-              <View style={styles.welcomeContainer}>
-                <LottieView
-                  source={require('../assets/animations/welcome.json')}
-                  autoPlay
-                  loop
-                  style={styles.welcomeAnimation}
-                />
+              <View style={styles.imageWrapperHeader}>
+                <ImageBackground source={require('../assets/images/6.jpeg')} style={styles.imageContainerHeader}>
                 <View style={styles.logo}>
-                  <Image source={require('../assets/images/fav.png')} style={styles.lottie}/>
+                  <View style={styles.logimage} className="bg-gray-300 rounded-2xl border-cyan-400">
+                  <Image source={require('../assets/images/healthmaster.png')} style={styles.lottie}/>
+                  </View>
                   <View style={styles.nameContainer}>
                     <Text style={styles.nameText}>Health Master</Text>
                   </View>
                 </View>
+                </ImageBackground>
               </View>
               <View style={styles.signupTextContainer}>
                 <Text style={styles.signupText}>Sign Up</Text>
@@ -223,10 +202,7 @@ export default function SignUp() {
                 {renderInput('mail-outline', 'Email', email, setEmail, 'email-address')}
                 {renderInput('lock-closed-outline', 'Password', password, setPassword, 'default', true, true)}
                 <TouchableOpacity 
-                  style={[
-                    styles.button,
-                    (!isPasswordValid() || !isEmailValid(email) || !username.trim() || isLoading) && styles.buttonDisabled
-                  ]} 
+                  style={[styles.button, (!isPasswordValid() || !isEmailValid(email) || !username.trim() || isLoading) && styles.buttonDisabled]} 
                   onPress={handleSignUp}
                   disabled={!isPasswordValid() || !isEmailValid(email) || !username.trim() || isLoading}
                 >
@@ -278,6 +254,7 @@ export default function SignUp() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -303,27 +280,37 @@ const styles = StyleSheet.create({
     width: '100%',
     height: height,
   },
+  imageWrapperHeader: {
+    height: height * 0.3,
+    width: '100%',
+    overflow: 'hidden',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    flex: 1 / 2,
+    shadowColor: '#2dd4bf',
+    shadowOffset: {
+      width: 2, 
+      height: 10,
+    },
+    shadowOpacity: 0.25, 
+    shadowRadius: 10, 
+    elevation: 5,
+  },
+  imageContainerHeader: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
   Imagecontainer: {
     flex: 1,
     width: '100%',
     height: '100%',
   },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-  },
-  welcomeAnimation: {
-    width: width * 0.8,
-    height: 150,
-  },
   FormContainer: {
+    flex: 1/2,
     width: '100%',
     paddingHorizontal: 20,
+    top: 20,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -424,13 +411,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   lottie: {
-    width: 30,
-    height: 30,
+    width: 60,
+    height: 60,
+    bottom: 5,
+    alignSelf: 'center',
   },
   logo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    top:"80%",
+    width: '100%',
+    left : '5%',
+    gap: 2,
+  },
+  logimage :{
+    width: 50,
+    height: 50,
+    resizeMode: 'cover',
+    borderRadius: 25,
+    borderColor: '#2dd4bf',
+    borderWidth: 2,
+    overflow: 'hidden',
   },
   nameContainer: {
     marginLeft: 10,
@@ -439,6 +440,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+    fontFamily: "Kanit-Bold",
   },
   signupTextContainer: {
     alignItems: 'flex-start',
@@ -449,6 +451,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4BE3AC',
+    top: 20,
+
   },
   passwordFeedbackContainer: {
     marginTop: 5,

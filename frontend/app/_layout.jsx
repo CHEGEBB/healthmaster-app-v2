@@ -61,6 +61,12 @@ const fontFiles = {
   'Raleway-Medium': require('../assets/fonts/Raleway-Medium.ttf'),
   'Raleway-Regular': require('../assets/fonts/Raleway-Regular.ttf'),
   'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
+  'Sora-Regular': require('../assets/fonts/Sora-Regular.ttf'),
+  'Sora-SemiBold': require('../assets/fonts/Sora-SemiBold.ttf'),
+  'Sora-Bold': require('../assets/fonts/Sora-Bold.ttf'),
+  'Sora-ExtraBold': require('../assets/fonts/Sora-ExtraBold.ttf'),
+  'Roboto-Regular': require('../assets/fonts/Roboto-Regular.ttf'),
+  'Roboto-Medium': require('../assets/fonts/Roboto-Medium.ttf'),
 };
 
 export default function Layout() {

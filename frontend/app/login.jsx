@@ -134,14 +134,14 @@ export default function Login() {
     >
       <Stack.Screen options={{ headerShown: false }} />
       <ImageBackground 
-        source={require("../assets/images/register.png")} 
+        source={require("../assets/images/6.jpeg")} 
         style={styles.backgroundPattern}
       >
         <View style={styles.overlay}>
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.imageWrapper}>
               <ImageBackground 
-                source={require("../assets/images/back.webp")} 
+                source={require("../assets/images/nw.jpeg")} 
                 style={styles.Imagecontainer}
               >
                 <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
@@ -228,6 +228,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
+    shadowColor: '#2dd4bf',
+    shadowOffset: {
+      width: 2, 
+      height: 10,
+    },
+    shadowOpacity: 0.25, 
+    shadowRadius: 10, 
+    elevation: 5,
   },
   Imagecontainer: {
     width: '100%',
