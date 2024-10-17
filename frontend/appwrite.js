@@ -288,4 +288,48 @@ export const fetchMedications = async () => {
     throw error;
   }
 };
+
+export const completeMedication = async (medicationId) => {
+  try {
+    const response = await databases.updateDocument(
+      Config.databaseId,
+      Config.medicationCollectionId,
+      medicationId,
+      { status: 'Completed' }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error completing medication:", error);
+    throw error;
+  }
+};
+
+export const deleteMedication = async (medicationId) => {
+  try {
+    await databases.deleteDocument(
+      Config.databaseId,
+      Config.medicationCollectionId,
+      medicationId
+    );
+  } catch (error) {
+    console.error("Error deleting medication:", error);
+    throw error;
+  }
+};
+
+export const updateMedication = async (medicationId, updatedData) => {
+  try {
+    const response = await databases.updateDocument(
+      Config.databaseId,
+      Config.medicationCollectionId,
+      medicationId,
+      updatedData
+    );
+    return response;
+  } catch (error) {
+    console.error("Error updating medication:", error);
+    throw error;
+  }
+};
+
 export { storage, databases };

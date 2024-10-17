@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,65 +8,283 @@ import {
   TouchableOpacity,
   TextInput,
   ImageBackground,
+  Alert,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import * as Appwrite from '../appwrite';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+const { width, height } = Dimensions.get('window');
+
+const EditMedicationModal = ({ visible, medication, onClose, onUpdate }) => {
+  const [name, setName] = useState(medication?.name || '');
+  const [dosage, setDosage] = useState(medication?.dosage || '');
+  const [time, setTime] = useState(medication?.timeOfDay || '');
+  const [quantity, setQuantity] = useState(medication?.quantity || '');
+  const [startDate, setStartDate] = useState(new Date(medication?.startDate || Date.now()));
+  const [endDate, setEndDate] = useState(new Date(medication?.endDate || Date.now()));
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  const handleUpdate = async () => {
+    try {
+      const updatedData = {
+        name,
+        dosage,
+        timeOfDay: time,
+        quantity,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      };
+
+      await Appwrite.updateMedication(medication.$id, updatedData);
+      onUpdate();
+      onClose();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update medication');
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Medication</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Feather name="x" size={24} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalForm}>
+            <Text style={styles.inputLabel}>Medication Name</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter medication name"
+              placeholderTextColor="#94a3b8"
+            />
+
+            <Text style={styles.inputLabel}>Dosage</Text>
+            <TextInput
+              style={styles.input}
+              value={dosage}
+              onChangeText={setDosage}
+              placeholder="Enter dosage"
+              placeholderTextColor="#94a3b8"
+            />
+
+            <Text style={styles.inputLabel}>Time of Day</Text>
+            <TextInput
+              style={styles.input}
+              value={time}
+              onChangeText={setTime}
+              placeholder="Enter time of day"
+              placeholderTextColor="#94a3b8"
+            />
+
+            <Text style={styles.inputLabel}>Quantity</Text>
+            <TextInput
+              style={styles.input}
+              value={quantity}
+              onChangeText={setQuantity}
+              placeholder="Enter quantity"
+              placeholderTextColor="#94a3b8"
+            />
+
+            <TouchableOpacity 
+              style={styles.dateButton} 
+              onPress={() => setShowStartPicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                Start Date: {startDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.dateButton} 
+              onPress={() => setShowEndPicker(true)}
+            >
+              <Text style={styles.dateButtonText}>
+                End Date: {endDate.toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+
+            {showStartPicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                onChange={(event, selectedDate) => {
+                  setShowStartPicker(false);
+                  if (selectedDate) setStartDate(selectedDate);
+                }}
+              />
+            )}
+
+            {showEndPicker && (
+              <DateTimePicker
+                value={endDate}
+                mode="date"
+                onChange={(event, selectedDate) => {
+                  setShowEndPicker(false);
+                  if (selectedDate) setEndDate(selectedDate);
+                }}
+              />
+            )}
+
+            <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
+              <Text style={styles.updateButtonText}>Update Medication</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const SuccessMessage = ({ visible }) => {
+  if (!visible) return null;
+
+  return (
+    <View style={styles.successMessage}>
+      <Feather name="check-circle" size={24} color="#22c55e" />
+      <Text style={styles.successText}>Successfully updated!</Text>
+    </View>
+  );
+};
 
 const MedicationOverview = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [medications, setMedications] = useState([]);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedMedication, setSelectedMedication] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const medications = [
-    { id: 1, name: 'Metformin', image: require('../assets/images/metformin.jpeg'), dosage: '500mg', time: '8:00 AM', type: 'tablet', category: 'Heart' },
-    { id: 2, name: 'Lisinopril', image: require('../assets/images/lisinopril.jpeg'), dosage: '10mg', time: '9:00 AM', type: 'tablet', category: 'Heart' },
-    { id: 3, name: 'Ibuprofen', image: require('../assets/images/ibuprofen.jpeg'), dosage: '200mg', time: '2:00 PM', type: 'tablet', category: 'Painkillers' },
-    { id: 4, name: 'Amoxicillin', image: require('../assets/images/amoxicillin.jpeg'), dosage: '250mg', time: '6:00 PM', type: 'liquid', category: 'Antibiotics' },
-    { id: 5, name: 'Loratadine', image: require('../assets/images/loratadine.jpeg'), dosage: '10mg', time: '10:00 PM', type: 'tablet', category: 'Brain' },
-    { id: 6, name: 'Omeprazole', image: require('../assets/images/omeprazole.jpeg'), dosage: '20mg', time: '7:00 AM', type: 'capsule', category: 'Heart' },
-    { id: 7, name: 'Aspirin', image: require('../assets/images/aspirin.jpeg'), dosage: '81mg', time: '7:30 AM', type: 'tablet', category: 'Heart' },
-    { id: 8, name: 'Sertraline', image: require('../assets/images/sertraline.jpeg'), dosage: '50mg', time: '9:30 AM', type: 'tablet', category: 'Brain' },
+  const categories = [
+    { id: '1', name: 'All', icon: 'apps', color: '#0d9488' },
+    { id: '2', name: 'Heart', icon: 'fitness-outline', color: '#ef4444' },
+    { id: '3', name: 'Brain', icon: 'invert-mode-outline', color: '#8b5cf6' },
+    { id: '4', name: 'Painkillers', icon: 'bandage', color: '#f59e0b' },
+    { id: '5', name: 'Antibiotics', icon: 'flask', color: '#10b981' },
   ];
 
   const recommendedMedications = [
-    { id: 101, name: 'Vitamin D3', image: require('../assets/images/vitamind.jpeg'), dosage: '2000 IU', description: 'Supports bone health' },
-    { id: 102, name: 'Omega-3', image: require('../assets/images/omega3.jpeg'), dosage: '1000mg', description: 'Heart health supplement' },
-    { id: 103, name: 'Magnesium', image: require('../assets/images/magnesium.jpeg'), dosage: '400mg', description: 'Supports muscle function' },
+    { 
+      id: '101', 
+      name: 'Vitamin D3', 
+      image: require('../assets/images/vitamind.jpeg'), 
+      dosage: '2000 IU', 
+      description: 'Supports bone health' 
+    },
+    { 
+      id: '102', 
+      name: 'Omega-3', 
+      image: require('../assets/images/omega3.jpeg'), 
+      dosage: '1000mg', 
+      description: 'Heart health supplement' 
+    },
+    { 
+      id: '103', 
+      name: 'Magnesium', 
+      image: require('../assets/images/magnesium.jpeg'), 
+      dosage: '400mg', 
+      description: 'Supports muscle function' 
+    },
   ];
 
-  const categories = [
-    { id: 1, name: 'All', icon: 'apps', color: '#0d9488' },
-    { id: 2, name: 'Heart', icon: 'fitness-outline', color: '#ef4444' },
-    { id: 3, name: 'Brain', icon: 'invert-mode-outline', color: '#8b5cf6' },
-    { id: 4, name: 'Painkillers', icon: 'bandage', color: '#f59e0b' },
-    { id: 5, name: 'Antibiotics', icon: 'flask', color: '#10b981' },
-  ];
+  const fetchMedications = useCallback(async () => {
+    try {
+      const fetchedMedications = await Appwrite.fetchMedications();
+      setMedications(fetchedMedications);
+    } catch (error) {
+      console.error("Error fetching medications:", error);
+      Alert.alert("Error", "Failed to fetch medications");
+    }
+  }, []);
 
-  const renderMedicationCard = (med) => {
-    if (selectedCategory !== 'All' && med.category !== selectedCategory) return null;
-    
-    return (
-      <TouchableOpacity
-        key={med.id}
-        style={styles.medicationCard}
-        onPress={() => navigation.navigate('SeeMedication', { medication: med })}
-      >
-        <Image source={med.image} style={styles.medicationImage} />
-        <View style={styles.medicationInfo}>
-          <Text style={styles.medicationName}>{med.name}</Text>
-          <Text style={styles.medicationDosage}>{med.dosage}</Text>
-          <Text style={styles.medicationTime}>{med.time}</Text>
-        </View>
-        <MaterialCommunityIcons 
-          name={med.type === 'tablet' ? 'pill' : med.type === 'liquid' ? 'bottle-tonic' : 'pill'} 
-          size={24} 
-          color="#94a3b8" 
-        />
-      </TouchableOpacity>
-    );
+  useEffect(() => {
+    fetchMedications();
+  }, [fetchMedications]);
+
+  const showSuccessMessage = () => {
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
+  const handleComplete = async (medicationId) => {
+    try {
+      await Appwrite.completeMedication(medicationId);
+      showSuccessMessage();
+      fetchMedications();
+    } catch (error) {
+      Alert.alert("Error", "Failed to complete medication");
+    }
+  };
+
+  const handleDelete = async (medicationId) => {
+    try {
+      await Appwrite.deleteMedication(medicationId);
+      fetchMedications();
+    } catch (error) {
+      Alert.alert("Error", "Failed to delete medication");
+    }
+  };
+
+  const handleEdit = (medication) => {
+    setSelectedMedication(medication);
+    setEditModalVisible(true);
+  };
+
+  const renderMedicationCard = (med) => (
+    <View key={med.$id} style={styles.medicationCard}>
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: med.imageUrl }} style={styles.medicationImage} />
+        <View style={styles.cardActionButtonsVertical}>
+          <TouchableOpacity 
+            onPress={() => handleComplete(med.$id)} 
+            style={styles.cardActionButton}
+          >
+            <Feather name="check-circle" size={20} color="#22c55e" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => handleEdit(med)} 
+            style={styles.cardActionButton}
+          >
+            <Feather name="edit" size={20} color="#3b82f6" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => handleDelete(med.$id)} 
+            style={styles.cardActionButton}
+          >
+            <Feather name="trash-2" size={20} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.medicationInfo}>
+        <Text style={styles.medicationName}>{med.name}</Text>
+        <Text style={styles.medicationDosage}>{med.dosage}</Text>
+        <Text style={styles.medicationTime}>{med.timeOfDay}</Text>
+      </View>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.medicationCard}>
+      <TouchableOpacity
+        style={[styles.emptyStateContainer]}
+        onPress={() => navigation.navigate('AddMedication')}
+      >
+        <Feather name="plus-circle" size={48} color="#94a3b8" />
+        <Text style={styles.emptyStateText}>Add Your First Medication</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  
   const renderRecommendedCard = (med) => (
     <TouchableOpacity key={med.id} style={styles.recommendedCard}>
       <Image source={med.image} style={styles.recommendedImage} />
@@ -100,9 +318,6 @@ const MedicationOverview = ({ navigation }) => {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity>
-              <Feather name="camera" size={24} color="#ffffff" />
-            </TouchableOpacity>
           </View>
         </LinearGradient>
       </ImageBackground>
@@ -137,7 +352,9 @@ const MedicationOverview = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Current Medications</Text>
           <View style={styles.medicationGrid}>
-            {medications.map(renderMedicationCard)}
+            {medications.length > 0 
+              ? medications.map(renderMedicationCard)
+              : renderEmptyState()}
           </View>
         </View>
 
@@ -155,11 +372,25 @@ const MedicationOverview = ({ navigation }) => {
               <Feather name="calendar" size={24} color="#94a3b8" />
               <Text style={styles.scheduleTitle}>Today's Schedule</Text>
             </View>
-            {medications.slice(0, 3).map(med => (
-              <View key={med.id} style={styles.scheduleItem}>
-                <Text style={styles.scheduleTime}>{med.time}</Text>
+            {medications.map(med => (
+              <View key={med.$id} style={styles.scheduleItem}>
+                <Text style={styles.scheduleTime}>{med.timeOfDay}</Text>
                 <Text style={styles.scheduleName}>{med.name}</Text>
                 <Text style={styles.scheduleDosage}>{med.dosage}</Text>
+                <View style={styles.scheduleActions}>
+                  <TouchableOpacity 
+                    onPress={() => handleComplete(med.$id)} 
+                    style={styles.actionButton}
+                  >
+                    <Feather name="check-circle" size={20} color="#22c55e" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => handleEdit(med)} 
+                    style={styles.actionButton}
+                  >
+                    <Feather name="edit" size={20} color="#3b82f6" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -167,6 +398,18 @@ const MedicationOverview = ({ navigation }) => {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+      
+      <EditMedicationModal
+        visible={editModalVisible}
+        medication={selectedMedication}
+        onClose={() => setEditModalVisible(false)}
+        onUpdate={() => {
+          fetchMedications();
+          showSuccessMessage();
+        }}
+      />
+
+      <SuccessMessage visible={showSuccess} />
 
       <TouchableOpacity
         style={styles.addButton}
@@ -188,7 +431,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1f2937',
-
   },
   header: {
     height: 350,
@@ -405,6 +647,226 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffffff',
     marginLeft: 10,
+  },
+  placeholderCard: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontFamily: 'Raleway-Medium',
+    fontSize: 16,
+    color: '#94a3b8',
+    marginTop: 10,
+  },
+  scheduleActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '25%',
+  },
+  pastMedicationsContainer: {
+    backgroundColor: '#134e4a',
+    borderRadius: 15,
+    padding: 15,
+  },
+  pastMedicationItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f766e',
+    paddingVertical: 10,
+  },
+  pastMedicationName: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  pastMedicationDosage: {
+    fontFamily: 'Raleway-Regular',
+    fontSize: 14,
+    color: '#94a3b8',
+  },
+  pastMedicationDate: {
+    fontFamily: 'Raleway-Regular',
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 5,
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#0f766e',
+  },
+  scheduleTime: {
+    fontFamily: 'Rubik-Medium',
+    fontSize: 14,
+    color: '#22d3ee',
+    width: '20%',
+  },
+  scheduleName: {
+    fontFamily: 'Raleway-Medium',
+    fontSize: 14,
+    color: '#ffffff',
+    width: '35%',
+  },
+  scheduleDosage: {
+    fontFamily: 'Raleway-Regular',
+    fontSize: 14,
+    color: '#94a3b8',
+    width: '20%',
+  },
+  scheduleActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '25%',
+  },
+  actionButton: {
+    marginLeft: 10,
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+  },
+  medicationImage: {
+    width: '100%',
+    height: '100%',
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+  cardActionButtons: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderRadius: 20,
+    padding: 4,
+  },
+  cardActionButton: {
+    marginHorizontal: 4,
+    padding: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  medicationCard: {
+    width: '48%',
+    backgroundColor: '#134e4a',
+    borderRadius: 15,
+    marginBottom: 15,
+    overflow: 'hidden',
+  },
+  medicationInfo: {
+    padding: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: width * 0.8,
+    height: height * 0.8,
+    backgroundColor: '#1f2937',
+    borderRadius: 20,
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 24,
+    color: '#ffffff',
+  },
+  modalForm: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontFamily: 'Raleway-Medium',
+    fontSize: 16,
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#374151',
+    borderRadius: 10,
+    padding: 12,
+    color: '#ffffff',
+    marginBottom: 16,
+  },
+  dateButton: {
+    backgroundColor: '#374151',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  dateButtonText: {
+    color: '#ffffff',
+    fontFamily: 'Raleway-Medium',
+  },
+  updateButton: {
+    backgroundColor: '#059669',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  updateButtonText: {
+    color: '#ffffff',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 16,
+  },
+  successMessage: {
+    position: 'absolute',
+    top: 100,
+    left: width * 0.1,
+    right: width * 0.1,
+    backgroundColor: 'rgba(34, 197, 94, 0.9)',
+    borderRadius: 10,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successText: {
+    color: '#ffffff',
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  cardActionButtonsVertical: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'column',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderRadius: 20,
+    padding: 4,
+  },
+  placeholderCard: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderContent: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  placeholderText: {
+    fontFamily: 'Raleway-Medium',
+    fontSize: 16,
+    color: '#94a3b8',
+    marginTop: 12,
+    textAlign: 'center',
   },
 });
 
