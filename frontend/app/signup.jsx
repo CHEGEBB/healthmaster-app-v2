@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    fontFamily: "Kanit-Bold",
+    fontFamily: "Rubik-Bold",
   },
   signupTextContainer: {
     alignItems: 'flex-start',
