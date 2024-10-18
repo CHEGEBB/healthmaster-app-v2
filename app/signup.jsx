@@ -7,6 +7,7 @@ import { Stack, useRouter } from 'expo-router';
 import { ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createUser } from '../appwrite';
+import LottieView from 'lottie-react-native';
 
 const { height, width } = Dimensions.get('window');
 

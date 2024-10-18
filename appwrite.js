@@ -10,7 +10,10 @@ export const Config = {
   medicationCollectionId: "670a256a00336a73c6d3",
   remindersCollectionId: "670a259c000d92ef0f0a",
   storageId: "670a2a300017fdaee701",
-  avatarId : "670b98c80004f12b1c7e"
+  avatarId : "670b98c80004f12b1c7e",  
+  soundsBucketId: "67120aaf001924753893"
+
+
 };
 
 const client = new Client();
@@ -330,6 +333,65 @@ export const updateMedication = async (medicationId, updatedData) => {
     console.error("Error updating medication:", error);
     throw error;
   }
+};
+export const createReminder = async (reminderDetails) => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const reminder = {
+      userId: currentUser.$id,
+      title: reminderDetails.title,
+      type: reminderDetails.type,
+      medicationId: reminderDetails.medicationId,
+      date: reminderDetails.date,
+      time: reminderDetails.time,
+      notificationSound: reminderDetails.notificationSound,
+      notes: reminderDetails.notes,
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await databases.createDocument(
+      Config.databaseId,
+      Config.remindersCollectionId,
+      ID.unique(),
+      reminder
+    );
+    console.log('Reminder created:', response);
+    return response;
+  } catch (error) {
+    console.error("Error creating reminder:", error);
+    throw error;
+  }
+};
+
+export const fetchReminders = async () => {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      throw new Error("No authenticated user found");
+    }
+
+    const response = await databases.listDocuments(
+      Config.databaseId,
+      Config.remindersCollectionId,
+      [
+        Query.equal("userId", currentUser.$id),
+        Query.orderDesc("createdAt")
+      ]
+    );
+
+    return response.documents;
+  } catch (error) {
+    console.error("Error fetching reminders:", error);
+    throw error;
+  }
+};
+
+export const getSoundFileUrl = (fileId) => {
+  return storage.getFileView(Config.soundsBucketId, fileId);
 };
 
 export { storage, databases };

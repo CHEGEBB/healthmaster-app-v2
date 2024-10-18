@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   Modal,
   Dimensions,
   FlatList,
+  Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createReminder, fetchReminders, getSoundFileUrl } from '../../appwrite';
+import { Audio } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,10 +29,9 @@ const MEDICATION_IMAGES = [
 ];
 
 const NOTIFICATION_SOUNDS = [
-  { id: '1', name: 'Default', sound: 'default_sound' },
-  { id: '2', name: 'Chime', sound: 'chime_sound' },
-  { id: '3', name: 'Bell', sound: 'bell_sound' },
-  { id: '4', name: 'Chirp', sound: 'chirp_sound' },
+  { id: '1', name: 'Chime', sound: require('../../assets/sounds/1.mp3') },
+  { id: '2', name: 'Bell', sound: require('../../assets/sounds/2.mp3') },
+  { id: '3', name: 'Chirp', sound: require('../../assets/sounds/3.mp3') },
 ];
 
 const Reminders = ({ navigation }) => {
@@ -48,23 +50,58 @@ const Reminders = ({ navigation }) => {
   const [reminders, setReminders] = useState([]);
 
   const animationRef = useRef(null);
+  
+  const sound = useRef(new Audio.Sound());
 
-  const handleSetReminder = () => {
-    const newReminder = {
-      id: Date.now().toString(),
-      title: reminderTitle,
-      type: reminderType,
-      date: date.toLocaleDateString(),
-      time: time.toLocaleTimeString(),
-      notes,
-      medication: selectedMedication,
-      sound: selectedSound,
+  useEffect(() => {
+    loadReminders();
+    return () => {
+      sound.current.unloadAsync();
     };
+  }, []);
 
-    setReminders([...reminders, newReminder]);
-    setShowSuccessModal(true);
-    if (animationRef.current) {
-      animationRef.current.play();
+  const loadReminders = async () => {
+    try {
+      const fetchedReminders = await fetchReminders();
+      setReminders(fetchedReminders);
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+      Alert.alert('Error', 'Failed to load reminders. Please try again.');
+    }
+  };
+
+  const handleSetReminder = async () => {
+    try {
+      const reminderDetails = {
+        title: reminderTitle,
+        type: reminderType,
+        date: date.toISOString(),
+        time: time.toISOString(),
+        notes,
+        medicationId: selectedMedication?.id,
+        notificationSound: selectedSound.id,
+      };
+
+      const newReminder = await createReminder(reminderDetails);
+      setReminders([...reminders, newReminder]);
+      setShowSuccessModal(true);
+      if (animationRef.current) {
+        animationRef.current.play();
+      }
+    } catch (error) {
+      console.error('Error setting reminder:', error);
+      Alert.alert('Error', 'Failed to set reminder. Please try again.');
+    }
+  };
+
+  const playSound = async (soundObject) => {
+    try {
+      await sound.current.unloadAsync();
+      await sound.current.loadAsync(soundObject);
+      await sound.current.playAsync();
+    } catch (error) {
+      console.error('Error playing sound:', error);
+      Alert.alert('Error', 'Failed to play sound. Please try again.');
     }
   };
 
@@ -318,37 +355,38 @@ const Reminders = ({ navigation }) => {
         </Modal>
 
         <Modal
-          transparent={true}
-          visible={showSoundModal}
-          onRequestClose={() => setShowSoundModal(false)}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Notification Sound</Text>
-              <FlatList
-                data={NOTIFICATION_SOUNDS}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.soundItem}
-                    onPress={() => {
-                      setSelectedSound(item);
-                      setShowSoundModal(false);
-                    }}
-                  >
-                    <Text style={styles.soundItemText}>{item.name}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.id}
-              />
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowSoundModal(false)}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
+        transparent={true}
+        visible={showSoundModal}
+        onRequestClose={() => setShowSoundModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Notification Sound</Text>
+            <FlatList
+              data={NOTIFICATION_SOUNDS}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.soundItem}
+                  onPress={() => {
+                    setSelectedSound(item);
+                    playSound(item.sound);
+                    setShowSoundModal(false);
+                  }}
+                >
+                  <Text style={styles.soundItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id}
+            />
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setShowSoundModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
-        </Modal>
+        </View>
+      </Modal>
       </ScrollView>
     </View>
   );
