@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Ionicons, FontAwesome5 ,Feather} from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { fetchAppointments, databases, Config } from '../appwrite';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -29,6 +29,7 @@ const AppointmentsList = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [todayAppointments, setTodayAppointments] = useState([]);
+  const [specialtyFocus, setSpecialtyFocus] = useState('diabetes');
 
   const notificationAnimation = useState(new Animated.Value(-SCREEN_HEIGHT))[0];
 
@@ -58,17 +59,59 @@ const AppointmentsList = ({ navigation }) => {
   };
 
   const categories = useMemo(() => [
-    { id: 1, name: 'Cardiology', color: '#FF6B6B', icon: 'heart' },
-    { id: 2, name: 'Dermatology', color: '#4ECDC4', icon: 'hand-paper' },
-    { id: 3, name: 'Pediatrics', color: '#45B7D1', icon: 'baby' },
-    { id: 4, name: 'Neurology', color: '#FFA07A', icon: 'brain' },
-    { id: 5, name: 'Orthopedics', color: '#98D8C8', icon: 'bone' },
+    { id: 1, name: 'Glucose Monitoring', color: '#FF6B6B', icon: 'tint', specialty: 'diabetes' },
+    { id: 2, name: 'Blood Pressure', color: '#4ECDC4', icon: 'heart', specialty: 'hypertension' },
+    { id: 3, name: 'Medication', color: '#45B7D1', icon: 'pills', specialty: 'both' },
+    { id: 4, name: 'Diet Plan', color: '#FFA07A', icon: 'apple-alt', specialty: 'both' },
+    { id: 5, name: 'Exercise Log', color: '#98D8C8', icon: 'running', specialty: 'both' },
   ], []);
 
+  const EmptyTodayAppointments = () => (
+    <View style={styles.emptyTodayContainer}>
+      <View style={styles.emptyStateCard}>
+        <LinearGradient
+          colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+          style={[styles.todayAppointmentGradient, styles.emptyGradient]}
+        >
+          <BlurView intensity={20} style={styles.blurView}>
+            <View style={styles.emptyIconContainer}>
+              <Feather name="calendar" size={40} color="#94a3b8" />
+            </View>
+            <Text style={styles.emptyStateTitle}>No Appointments Today</Text>
+            <Text style={styles.emptyStateSubtitle}>Take care of your health!</Text>
+          </BlurView>
+        </LinearGradient>
+      </View>
+
+      <TouchableOpacity
+        style={styles.addAppointmentCard}
+        onPress={() => navigation.navigate('BookAppointment')}
+      >
+        <LinearGradient
+          colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
+          style={[styles.todayAppointmentGradient, styles.emptyGradient]}
+        >
+          <BlurView intensity={20} style={styles.blurView}>
+            <View style={styles.addIconContainer}>
+              <Feather name="plus-circle" size={40} color="#34d399" />
+            </View>
+            <Text style={styles.addCardTitle}>Schedule Check-up</Text>
+            <Text style={styles.addCardSubtitle}>
+              {specialtyFocus === 'diabetes' ? 'Monitor your glucose levels' : 'Check your blood pressure'}
+            </Text>
+          </BlurView>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
+
+
   const renderTodayAppointmentCard = useCallback(({ item }) => {
+
+    
     // Generate a unique random number for each card
     const randomImageNumber = Math.floor(Math.random() * 10) + 1;
-  
+
     return (
       <TouchableOpacity
         style={styles.todayAppointmentCard}
@@ -101,67 +144,77 @@ const AppointmentsList = ({ navigation }) => {
       </TouchableOpacity>
     );
   }, []);
-  
 
 
-  // Map image numbers to the actual require calls
-const images = {
-  1: require('../assets/images/appointmentcards/1.jpeg'),
-  2: require('../assets/images/appointmentcards/2.jpeg'),
-  3: require('../assets/images/appointmentcards/3.jpeg'),
-  4: require('../assets/images/appointmentcards/4.jpeg'),
-  5: require('../assets/images/appointmentcards/5.jpeg'),
-  6: require('../assets/images/appointmentcards/6.jpeg'),
-  7: require('../assets/images/appointmentcards/7.jpeg'),
-  8: require('../assets/images/appointmentcards/8.jpeg'),
-  9: require('../assets/images/appointmentcards/9.jpeg'),
-  10: require('../assets/images/appointmentcards/10.jpeg'),
-};
 
-const renderAppointmentCard = useCallback(({ item, index }) => {
-  // Generate a unique random number for each card
-  const randomImageNumber = Math.floor(Math.random() * 10) + 1;
+  const images = {
+    1: require('../assets/images/appointmentcards/1.jpeg'),
+    2: require('../assets/images/appointmentcards/2.jpeg'),
+    3: require('../assets/images/appointmentcards/3.jpeg'),
+    4: require('../assets/images/appointmentcards/4.jpeg'),
+    5: require('../assets/images/appointmentcards/5.jpeg'),
+    6: require('../assets/images/appointmentcards/6.jpeg'),
+    7: require('../assets/images/appointmentcards/7.jpeg'),
+    8: require('../assets/images/appointmentcards/8.jpeg'),
+    9: require('../assets/images/appointmentcards/9.jpeg'),
+    10: require('../assets/images/appointmentcards/10.jpeg'),
+  };
 
-  return (
-    <TouchableOpacity
-      style={[styles.appointmentCard, getStatusColor(item.status)]}
-      onPress={() => {
-        setSelectedAppointment(item);
-        setShowAppointmentDetails(true);
-      }}
-    >
-      {/* Use the randomImageNumber to get the corresponding image */}
-      <Image 
-        source={images[randomImageNumber]} 
-        style={styles.appointmentCardImage}
-      />
-      <View style={styles.appointmentDetails}>
-        <Text style={styles.appointmentDoctorName}>{item.doctorName}</Text>
-        <Text style={styles.appointmentSpecialization}>{item.doctorSpecialization}</Text>
-        <Text style={styles.appointmentDate}>{formatDate(new Date(item.date))}</Text>
-        <Text style={styles.appointmentTime}>{formatTime(new Date(item.date))}</Text>
-        <View style={styles.statusContainer}>
-          <FontAwesome5 name={getStatusIcon(item.status)} size={16} color={getStatusColor(item.status).borderColor} />
-          <Text style={[styles.appointmentStatus, getStatusTextColor(item.status)]}>{item.status}</Text>
+  const renderAppointmentCard = useCallback(({ item, index }) => {
+    // Generate a unique random number for each card
+    const randomImageNumber = Math.floor(Math.random() * 10) + 1;
+
+    return (
+      <TouchableOpacity
+        style={[styles.appointmentCard, getStatusColor(item.status)]}
+        onPress={() => {
+          setSelectedAppointment(item);
+          setShowAppointmentDetails(true);
+        }}
+      >
+        {/* Use the randomImageNumber to get the corresponding image */}
+        <Image
+          source={images[randomImageNumber]}
+          style={styles.appointmentCardImage}
+        />
+        <View style={styles.appointmentDetails}>
+          <Text style={styles.appointmentDoctorName}>{item.doctorName}</Text>
+          <Text style={styles.appointmentSpecialization}>{item.doctorSpecialization}</Text>
+          <Text style={styles.appointmentDate}>{formatDate(new Date(item.date))}</Text>
+          <Text style={styles.appointmentTime}>{formatTime(new Date(item.date))}</Text>
+          <View style={styles.statusContainer}>
+            <FontAwesome5 name={getStatusIcon(item.status)} size={16} color={getStatusColor(item.status).borderColor} />
+            <Text style={[styles.appointmentStatus, getStatusTextColor(item.status)]}>{item.status}</Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
-}, []);
+      </TouchableOpacity>
+    );
+  }, []);
 
   const renderCategoryCard = useCallback(({ item }) => (
     <TouchableOpacity
       style={[
         styles.categoryCard,
         { backgroundColor: item.color },
-        selectedCategory === item.id && styles.selectedCategoryCard
+        selectedCategory === item.id && styles.selectedCategoryCard,
+        styles.categoryCardEnhanced
       ]}
-      onPress={() => setSelectedCategory(selectedCategory === item.id ? null : item.id)}
+      onPress={() => {
+        setSelectedCategory(selectedCategory === item.id ? null : item.id);
+        setSpecialtyFocus(item.specialty === 'both' ? specialtyFocus : item.specialty);
+      }}
     >
       <FontAwesome5 name={item.icon} size={24} color="#FFFFFF" />
       <Text style={styles.categoryName}>{item.name}</Text>
+      {item.specialty !== 'both' && (
+        <View style={styles.specialtyBadge}>
+          <Text style={styles.specialtyBadgeText}>
+            {item.specialty === 'diabetes' ? 'D' : 'H'}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
-  ), [selectedCategory]);
+  ), [selectedCategory, specialtyFocus]);
 
   const getStatusColor = useCallback((status) => {
     switch (status.toLowerCase()) {
@@ -258,7 +311,7 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
   };
 
   return (
-    <View style={styles.container}  contentContainerStyle={styles.contentContainer}>
+    <View style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Image
           source={require('../assets/images/tba.jpeg')}
@@ -282,9 +335,9 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
         </View>
       </View>
 
-      <Animated.View 
+      <Animated.View
         style={[
-          styles.notificationContainer, 
+          styles.notificationContainer,
           { transform: [{ translateY: notificationAnimation }] }
         ]}
       >
@@ -314,14 +367,18 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
           <>
             <View style={styles.todayAppointments}>
               <Text style={styles.sectionTitle}>Today's Appointments</Text>
-              <FlatList
-                data={todayAppointments}
-                renderItem={renderTodayAppointmentCard}
-                keyExtractor={item => item.$id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.todayAppointmentList}
-              />
+              {todayAppointments.length === 0 ? (
+                <EmptyTodayAppointments />
+              ) : (
+                <FlatList
+                  data={todayAppointments}
+                  renderItem={renderTodayAppointmentCard}
+                  keyExtractor={item => item.$id}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.todayAppointmentList}
+                />
+              )}
             </View>
 
             <View style={styles.categories}>
@@ -360,22 +417,22 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
         }
         ListFooterComponent={
           <View style={styles.footer}>
-             <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate('BookAppointment')}
-      >
-        <LinearGradient
-          colors={['#34d399', '#0c4a6e']}
-          style={styles.addButtonGradient}
-        >
-          <Feather name="plus" size={24} color="#ffffff" />
-          <Text style={styles.addButtonText}>Book Appointment</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate('BookAppointment')}
+            >
+              <LinearGradient
+                colors={['#34d399', '#0c4a6e']}
+                style={styles.addButtonGradient}
+              >
+                <Feather name="plus" size={24} color="#ffffff" />
+                <Text style={styles.addButtonText}>Book Appointment</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         }
       />
-<Modal
+      <Modal
         visible={showAppointmentDetails}
         animationType="slide"
         transparent={true}
@@ -429,7 +486,7 @@ const renderAppointmentCard = useCallback(({ item, index }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#000',
     paddingBottom: 80,
 
   },
@@ -450,7 +507,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     borderRadius: 15,
     borderColor: "#10b981",
-borderWidth : 2,
+    borderWidth: 2,
 
   },
   contentContainer: {
@@ -466,14 +523,14 @@ borderWidth : 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop :40,
+    marginTop: 40,
   },
   profileIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    borderColor:"#34d399",
-borderWidth: 2,
+    borderColor: "#34d399",
+    borderWidth: 2,
   },
   headerTitle: {
     fontSize: 32,
@@ -525,8 +582,8 @@ borderWidth: 2,
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
-    borderColor:"#34d399",
-borderWidth: 2,
+    borderColor: "#34d399",
+    borderWidth: 2,
 
   },
   notificationDot: {
@@ -612,7 +669,7 @@ borderWidth: 2,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
-    paddingHorizontal : 2,
+    paddingHorizontal: 2,
     top: 3,
   },
   todayDoctorName: {
@@ -632,6 +689,7 @@ borderWidth: 2,
   },
   categoryList: {
     paddingHorizontal: 10,
+    right: 20,
   },
   categoryCard: {
     width: 90,
@@ -880,6 +938,111 @@ borderWidth: 2,
     textAlign: 'center',
     fontSize: 16,
     fontFamily: 'Poppins-Medium',
+  },
+  emptyTodayContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    height: 210,
+    width: 350,
+    right: 20,
+  },
+  emptyStateCard: {
+    width: '48%',
+    height: '100%',
+    backgroundColor: '#1f2937',
+    borderRadius: 15,
+    borderStyle: 'dashed',
+    borderWidth: 2,
+    borderColor: '#94a3b8',
+    overflow: 'hidden',
+  },
+  addAppointmentCard: {
+    width: '48%',
+    height: '100%',
+    backgroundColor: '#1f2937',
+    borderRadius: 15,
+    borderStyle: 'solid',
+    borderWidth: 2,
+    borderColor: '#34d399',
+    overflow: 'hidden',
+  },
+  emptyGradient: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    alignSelf: 'center',
+    top: 5,
+  },
+  addIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    alignSelf: 'center',
+    top: 5,
+    
+  },
+  emptyStateTitle: {
+    color: '#94a3b8',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    color: '#64748b',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  addCardTitle: {
+    color: '#34d399',
+    fontSize: 16,
+    fontFamily: 'Poppins-SemiBold',
+    textAlign: 'center',
+  },
+  addCardSubtitle: {
+    color: '#10b981',
+    fontSize: 12,
+    fontFamily: 'Poppins-Regular',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  categoryCardEnhanced: {
+    position: 'relative',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  specialtyBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  specialtyBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 

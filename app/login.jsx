@@ -9,6 +9,7 @@ import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { signIn } from '../appwrite';
+import Started from "./started"
 
 const { width, height } = Dimensions.get('window');
 
@@ -89,6 +90,7 @@ export default function Login() {
     } catch (error) {
       console.error('Login error:', error);
       let errorMessage = 'An error occurred during login. Please try again.';
+      router.push('/started');
       if (error.code === 401) {
         errorMessage = 'Invalid email or password. Please try again.';
       } else if (error.code === 429) {
@@ -141,7 +143,7 @@ export default function Login() {
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.imageWrapper}>
               <ImageBackground 
-                source={require("../assets/images/nw.jpeg")} 
+                source={require("../assets/images/ab6.jpeg")} 
                 style={styles.Imagecontainer}
               >
                 <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />

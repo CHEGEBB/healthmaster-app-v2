@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import * as Appwrite from '../appwrite';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,6 +30,11 @@ const EditMedicationModal = ({ visible, medication, onClose, onUpdate }) => {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+
+  const handleCardClick = ()=>{
+    router.push('/SeeMedication')
+  }
 
 
   const handleUpdate = async () => {
@@ -243,7 +249,21 @@ const MedicationOverview = ({ navigation }) => {
   };
 
   const renderMedicationCard = (med) => (
-    <View key={med.$id} style={styles.medicationCard}>
+    <TouchableOpacity
+      key={med.$id}
+      style={styles.medicationCard}
+      onPress={() => navigation.navigate('SeeMedication', {
+        medication: {
+          ...med,
+          type: med.type || 'Oral',
+          category: med.category || 'General',
+          frequency: med.frequency || 'Daily',
+          description: med.description || '',
+          sideEffects: med.sideEffects || '',
+          precautions: med.precautions || ''
+        }
+      })}
+    >
       <View style={styles.imageContainer}>
         <Image source={{ uri: med.imageUrl }} style={styles.medicationImage} />
         <View style={styles.cardActionButtonsVertical}>
@@ -272,8 +292,9 @@ const MedicationOverview = ({ navigation }) => {
         <Text style={styles.medicationDosage}>{med.dosage}</Text>
         <Text style={styles.medicationTime}>{med.timeOfDay}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
+  
 
   const renderEmptyState = () => (
     <View style={styles.medicationCardEmpty}>

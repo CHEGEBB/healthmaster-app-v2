@@ -180,16 +180,16 @@ export default function SignUp() {
           <Ionicons name="arrow-back-circle-outline" size={32} color="#fff" />
         </TouchableOpacity>
         <View style={styles.imageWrapper}>
-          <ImageBackground source={require('../assets/images/6.jpeg')} style={styles.Imagecontainer}>
+          <ImageBackground source={require('../assets/images/register.png')} style={styles.Imagecontainer}>
             <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
               <View style={styles.imageWrapperHeader}>
-                <ImageBackground source={require('../assets/images/6.jpeg')} style={styles.imageContainerHeader}>
+                <ImageBackground source={require('../assets/images/bgh.jpeg') } style={styles.imageContainerHeader}>
                 <View style={styles.logo}>
                   <View style={styles.logimage} className="bg-gray-300 rounded-2xl border-cyan-400">
                   <Image source={require('../assets/images/healthmaster.png')} style={styles.lottie}/>
                   </View>
                   <View style={styles.nameContainer}>
-                    <Text style={styles.nameText}>Health Master</Text>
+                    <Text style={styles.nameText} >Health Master</Text>
                   </View>
                 </View>
                 </ImageBackground>
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     paddingBottom: 40,
   },

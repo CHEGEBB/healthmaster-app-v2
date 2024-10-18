@@ -248,6 +248,31 @@ export default function Dashboard() {
     )}
   </ScrollView>
 </View>
+<HealthStats />
+ {/* Medications section */}
+ <View style={styles.medicationsContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My Medications</Text>
+          <TouchableOpacity onPress={() => router.push('/medications')}>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.medicationGrid}>
+          {medications.map((medication, index) => (
+            <MedicationCard key={index} medication={medication} />
+          ))}
+        </View>
+      </View>
+
+      {/* Today's Important Medications section */}
+      <View style={styles.importantMedicationsContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Today's Important Medications</Text>
+        </View>
+        {importantMedications.map((medication, index) => (
+          <ImportantMedicationItem key={index} medication={medication} />
+        ))}
+      </View>
 {/* Upcoming Schedule section */}
 <View style={styles.upcomingSchedule}>
   <View style={styles.sectionHeader}>
@@ -277,32 +302,7 @@ export default function Dashboard() {
     ))
   )}
 </View>
-      {/* Medications section */}
-      <View style={styles.medicationsContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>My Medications</Text>
-          <TouchableOpacity onPress={() => router.push('/medications')}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.medicationGrid}>
-          {medications.map((medication, index) => (
-            <MedicationCard key={index} medication={medication} />
-          ))}
-        </View>
-      </View>
-
-      {/* Today's Important Medications section */}
-      <View style={styles.importantMedicationsContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Important Medications</Text>
-        </View>
-        {importantMedications.map((medication, index) => (
-          <ImportantMedicationItem key={index} medication={medication} />
-        ))}
-      </View>
-
-      <HealthStats />
+     
       {/* <Reminders /> */}
 
 
@@ -353,7 +353,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#000',
   },
   contentContainer: {
     flexGrow: 1,

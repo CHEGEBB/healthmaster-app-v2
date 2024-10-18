@@ -150,7 +150,7 @@ const renderMedicationCard = (med) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#000',
   },
   scrollContent: {
     flexGrow: 1,
