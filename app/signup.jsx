@@ -180,10 +180,11 @@ export default function SignUp() {
           <Ionicons name="arrow-back-circle-outline" size={32} color="#fff" />
         </TouchableOpacity>
         <View style={styles.imageWrapper}>
-          <ImageBackground source={require('../assets/images/register.png')} style={styles.Imagecontainer}>
+          <ImageBackground source={require('../assets/images/6.jpeg')} style={styles.Imagecontainer}>
             <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
               <View style={styles.imageWrapperHeader}>
-                <ImageBackground source={require('../assets/images/bgh.jpeg') } style={styles.imageContainerHeader}>
+              <View style={styles.overlay2}>
+                <ImageBackground source={require('../assets/images/ab6.jpeg') } style={styles.imageContainerHeader}>
                 <View style={styles.logo}>
                   <View style={styles.logimage} className="bg-gray-300 rounded-2xl border-cyan-400">
                   <Image source={require('../assets/images/healthmaster.png')} style={styles.lottie}/>
@@ -193,6 +194,7 @@ export default function SignUp() {
                   </View>
                 </View>
                 </ImageBackground>
+                </View>
               </View>
               <View style={styles.signupTextContainer}>
                 <Text style={styles.signupText}>Sign Up</Text>
@@ -270,9 +272,15 @@ const styles = StyleSheet.create({
     left: 20,
     zIndex: 10,
   },
+  overlay2: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+  
+  },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     paddingBottom: 40,
   },
@@ -316,7 +324,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 10,
     marginBottom: 15,
     paddingHorizontal: 10,

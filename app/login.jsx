@@ -143,7 +143,7 @@ export default function Login() {
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
             <View style={styles.imageWrapper}>
               <ImageBackground 
-                source={require("../assets/images/ab6.jpeg")} 
+                source={require("../assets/images/back.webp")} 
                 style={styles.Imagecontainer}
               >
                 <Animated.View style={[styles.overlay, { opacity: fadeAnim }]} />
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   imageWrapper: {
-    height: height * 0.4,
+    height: height * 0.44,
     width: '100%',
     overflow: 'hidden',
     borderBottomLeftRadius: 30,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 45,
   },
   logoContainer: {
     flexDirection: 'row',
