@@ -150,7 +150,7 @@ export default function VideoCall() {
           style={styles.video}
           resizeMode="cover"
           isLooping={false}
-          shouldPlay={false}
+          shouldPlay={true}
         />
 
         {/* Call Info Bar */}
@@ -159,7 +159,7 @@ export default function VideoCall() {
           style={styles.callInfoBar}
         >
           <View style={styles.callInfo}>
-            <Text style={styles.doctorName}>Dr. Sarah Wilson</Text>
+            <Text style={styles.doctorName}>Dr. James Wilson</Text>
             <Text style={styles.callDuration}>{formatTime(elapsedTime)}</Text>
           </View>
           <View style={styles.connectionInfo}>
@@ -171,10 +171,14 @@ export default function VideoCall() {
         {/* User Video Preview */}
         {callState === 'ongoing' && (
           <View style={styles.userVideoContainer}>
-            <Image 
-              source={require('../../assets/images/cards/2.jpeg')}
-              style={styles.userVideo}
-            />
+            <Video
+          ref={videoRef}
+          source={require('../../assets/video/pat.mp4')}
+          style={styles.userVideo}
+          resizeMode="cover"
+          isLooping={false}
+          shouldPlay={true}
+        />
             {!isCameraOn && (
               <View style={styles.cameraPaused}>
                 <Ionicons name="videocam-off" size={24} color="#FFF" />

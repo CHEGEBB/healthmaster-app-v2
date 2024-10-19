@@ -134,7 +134,7 @@ const HealthStats = () => {
     setSteps(newSteps);
 
     const currentTime = Date.now();
-    if (currentTime - lastAlertTime > 30000) { // Only show alert every 30 seconds
+    if (currentTime - lastAlertTime > 60000) { 
       checkAlerts(newHeartRate, newSystolic, newDiastolic, newGlucoseLevel, newOxygenLevel);
       setLastAlertTime(currentTime);
     }
