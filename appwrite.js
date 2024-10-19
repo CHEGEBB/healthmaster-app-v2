@@ -11,7 +11,8 @@ export const Config = {
   remindersCollectionId: "670a259c000d92ef0f0a",
   storageId: "670a2a300017fdaee701",
   avatarId : "670b98c80004f12b1c7e",  
-  soundsBucketId: "67120aaf001924753893"
+  soundsBucketId: "67120aaf001924753893",
+  userProfileCollectionId :"67138639002d243031e0",
 
 
 };
@@ -393,5 +394,86 @@ export const fetchReminders = async () => {
 export const getSoundFileUrl = (fileId) => {
   return storage.getFileView(Config.soundsBucketId, fileId);
 };
+
+export const createUserProfile = async()=>{
+  try {
+    const response = await databases.createDocument(
+      Config.databaseId,
+      Config.userProfileCollectionId,
+      ID.unique(),
+      {
+        userId: account.currentUser().uid,
+        avatar: 'default_avatar.png',
+        name : account.currentUser().name,
+        email: account.currentUser().email,
+        phone: '',
+        dateOfBirth: '',
+        gender: '',
+        bloodType: '',
+        height: '',
+        weight: '',
+        allergies: '',
+        emergencyContact: '',
+        createdAt: new Date().toISOString(),
+      }
+    );
+    console.log('User profile created:', response);
+    return response;
+  } catch (error) {
+    console.error("Error creating user profile:", error);
+    throw error;
+  }
+};
+export const uploadAvatar = async (imageUri) => {
+  try {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    const fileName = `avatar_${Date.now()}.jpg`;
+    
+    const file = await storage.createFile(
+      Config.avatarId,
+      ID.unique(),
+      blob,
+      fileName
+    );
+
+    const fileUrl = storage.getFileView(Config.avatarId, file.$id);
+    return fileUrl;
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (userId, profileData) => {
+  try {
+    const response = await databases.updateDocument(
+      Config.databaseId,
+      Config.userProfileCollectionId,
+      userId,
+      profileData
+    );
+    console.log('User profile updated:', response);
+    return response;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+};
+
+export const fetchUserProfile = async (userId) => {
+  try {
+    const response = await databases.getDocument(
+      Config.databaseId,
+      Config.userProfileCollectionId,
+      userId
+    );
+    return response;
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    throw error;
+  }
+};
+
 
 export { storage, databases };

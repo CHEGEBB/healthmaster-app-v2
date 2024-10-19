@@ -18,22 +18,46 @@ const cardImages = [
 
 const getRandomImage = () => cardImages[Math.floor(Math.random() * cardImages.length)];
 
+
 const AppointmentCard = ({ appointment, onPress }) => {
+  const router = useRouter();
+  const handleVideoCall = () => {
+    router.push('/videoCall');
+  };
+
   return (
     <TouchableOpacity style={styles.appointmentCard} onPress={onPress}>
-      <ImageBackground source={getRandomImage()} style={styles.appointmentImage}>
-        <LinearGradient
-          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
-          style={styles.appointmentGradient}
-        >
-          <View style={styles.appointmentInfo}>
-            <Text style={styles.appointmentTime}>{new Date(appointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-            <Text style={styles.appointmentDoctor}>{appointment.doctorName}</Text>
-            <Text style={styles.appointmentSpecialty}>{appointment.doctorSpecialization}</Text>
-          </View>
-        </LinearGradient>
-      </ImageBackground>
-    </TouchableOpacity>
+    <ImageBackground source={getRandomImage()} style={styles.appointmentImage}>
+      <LinearGradient
+        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']}
+        style={styles.appointmentGradient}
+      >
+        <View style={styles.iconContainer}>
+          <TouchableOpacity style={styles.iconButton}>
+            <Ionicons name="call-outline" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={handleVideoCall}
+          >
+            <Ionicons name="videocam-outline" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.appointmentInfo}>
+          <Text style={styles.appointmentTime}>
+            {new Date(appointment.date).toLocaleTimeString([], { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}
+          </Text>
+          <Text style={styles.appointmentDoctor}>{appointment.doctorName}</Text>
+          <Text style={styles.appointmentSpecialty}>
+            {appointment.doctorSpecialization}
+          </Text>
+        </View>
+      </LinearGradient>
+    </ImageBackground>
+  </TouchableOpacity>
   );
 };
 
@@ -369,6 +393,23 @@ const styles = StyleSheet.create({
   headerOverlay: {
     flex: 1,
     padding: 20,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    top: 10,
+    left: 15,
+    right: 15,
+    zIndex: 1,
+    backgroundColor :"rgba(0, 0, 0, 0.5)",
+    borderRadius: 20,
+
+  },
+  iconButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
   },
   headerContent: {
     flex: 1,
